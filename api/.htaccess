@@ -1,0 +1,60 @@
+# ---------------------------------------------------------
+
+# Sécurité du dossier /api
+
+# ---------------------------------------------------------
+
+# Désactiver l’indexation
+
+Options -Indexes
+
+# Bloquer l’accès au fichier .env
+
+<FilesMatch "^\.env">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Bloquer les fichiers sensibles
+
+<FilesMatch "\.(pem|key|bak|old|zip|tar|gz|sql|7z)$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Bloquer les JSON sensibles
+
+<FilesMatch "gen-lang-client-.\*\.json$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Bloquer tous les .json
+
+<FilesMatch "\.json$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Bloquer les fichiers PHP internes
+
+<FilesMatch "^(db|cors|error|config|init)\.php$">
+Order allow,deny
+Deny from all
+</FilesMatch>
+
+# Bloquer l’accès au dossier vendor
+
+RedirectMatch 404 ^vendor/.\*$
+
+# ---------------------------------------------------------
+
+# Réécriture des URLs API pour compatibilité avec le front
+
+# ---------------------------------------------------------
+
+RewriteEngine On
+
+# /api/users/7/books → /api/books/get.php?user_id=7
+
+RewriteRule ^users/([0-9]+)/books$ books/get.php?user_id=$1 [L,QSA]
