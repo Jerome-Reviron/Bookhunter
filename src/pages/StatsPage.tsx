@@ -30,7 +30,7 @@ const StatsPage = ({ user }: { user: User }) => {
 
   return (
     <div className="pb-24 md:pb-8 md:pl-72 p-6 max-w-6xl mx-auto">
-      <h2 className="text-5xl font-serif italic mb-12">Statistiques</h2>
+      <h2 className="text-5xl font-serif italic mb-12"> Mes Statistiques</h2>
 
       {/* TOP CARDS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
