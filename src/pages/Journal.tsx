@@ -287,7 +287,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
           <p className="text-xs uppercase tracking-[0.2em] font-semibold opacity-40 mb-2">
             Bienvenue {user.pseudo}
           </p>
-          <h2 className="text-5xl font-serif italic">Journal de Lecture</h2>
+          <h2 className="text-5xl font-serif italic">Mon Journal de Lecture</h2>
         </div>
 
         <button
