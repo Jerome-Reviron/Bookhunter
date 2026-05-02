@@ -26,10 +26,10 @@ export default defineConfig(({ mode }) => {
       // ⭐ PROXY API — EXACTEMENT COMME TOONHUNTER
       proxy: {
         "/api": {
-          target: "http://localhost/Bookhunter/api",
+          target: "http://localhost/Bookhunter",
           changeOrigin: true,
           secure: false,
-          rewrite: (path) => path.replace(/^\/api/, ""),
+          rewrite: (path) => path.replace(/^\/api/, "/api"),
         },
       },
     },

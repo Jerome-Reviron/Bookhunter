@@ -4,7 +4,7 @@
 
 export interface User {
   id: number;
-  username: string;
+  pseudo: string;
   email: string;
   points: number;
   role: "user" | "admin";
@@ -16,7 +16,7 @@ export interface User {
   unlocked_fonts: string;
   unlocked_backgrounds: string;
 
-  created_at: string;
+  createdAt: string;
 }
 
 // =========================
