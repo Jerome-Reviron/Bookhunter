@@ -29,14 +29,14 @@ const ProfilePage = ({ user }: { user: User }) => {
 
   // Load profile
   useEffect(() => {
-    fetch(`/api/user/${user.id}`)
+    fetch("/api/user/get.php")
       .then((res) => res.json())
       .then(setProfile);
   }, [user.id]);
 
   const handleUpdateAvatar = async () => {
-    const res = await fetch(`/api/user/${user.id}`, {
-      method: "PATCH",
+    const res = await fetch("/api/user/update.php", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ avatar_url: avatarUrl }),
     });
@@ -54,9 +54,17 @@ const ProfilePage = ({ user }: { user: User }) => {
       </div>
     );
 
-  const stickers = JSON.parse(profile.unlocked_stickers || "[]");
-  const fonts = JSON.parse(profile.unlocked_fonts || "[]");
-  const bgs = JSON.parse(profile.unlocked_backgrounds || "[]");
+  const stickers = Array.isArray(profile.unlocked_stickers)
+    ? profile.unlocked_stickers
+    : [];
+
+  const fonts = Array.isArray(profile.unlocked_fonts)
+    ? profile.unlocked_fonts
+    : [];
+
+  const bgs = Array.isArray(profile.unlocked_backgrounds)
+    ? profile.unlocked_backgrounds
+    : [];
 
   return (
     <div className="pb-24 md:pb-8 md:pl-72 p-6 max-w-4xl mx-auto">
@@ -64,7 +72,7 @@ const ProfilePage = ({ user }: { user: User }) => {
       <header className="mb-12">
         <h2 className="text-5xl font-serif italic mb-2">Mon Profil</h2>
         <p className="text-ink/40 uppercase tracking-widest text-xs font-bold">
-          Membre depuis le {new Date(profile.created_at).toLocaleDateString()}
+          Membre depuis le {new Date(profile.createdAt).toLocaleDateString()}
         </p>
       </header>
 
@@ -95,7 +103,7 @@ const ProfilePage = ({ user }: { user: User }) => {
           </div>
 
           <div className="text-center">
-            <h3 className="text-2xl font-serif italic">{profile.username}</h3>
+            <h3 className="text-2xl font-serif italic">{profile.pseudo}</h3>
             <p className="text-ink/40 text-sm">{profile.email}</p>
           </div>
 
