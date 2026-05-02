@@ -2,36 +2,33 @@
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../db.php';
 
-// Vérifier que l'utilisateur est connecté
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(["error" => "Not authenticated"]);
     exit;
 }
 
-// Vérifier méthode POST
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(["error" => "Method not allowed"]);
     exit;
 }
 
-// Récupérer le JSON envoyé par le front
 $input = json_decode(file_get_contents("php://input"), true);
 
-if (!$input || !isset($input["item_id"])) {
+if (!$input || !isset($input["itemId"])) {
     http_response_code(400);
-    echo json_encode(["error" => "Missing item_id"]);
+    echo json_encode(["error" => "Missing itemId"]);
     exit;
 }
 
 $userId = intval($_SESSION['user_id']);
-$itemId = intval($input["item_id"]);
+$itemId = intval($input["itemId"]);
 
 try {
     // Récupérer l'item
     $stmt = $pdo->prepare("
-        SELECT id, type, name, price
+        SELECT id, type, name, price_points, image_url, value, stripe_url
         FROM shop_items
         WHERE id = ?
         LIMIT 1
@@ -62,9 +59,9 @@ try {
     }
 
     $points = intval($user["points"]);
+    $price = intval($item["price_points"]);
 
-    // Vérifier les points
-    if ($points < intval($item["price"])) {
+    if ($points < $price) {
         http_response_code(400);
         echo json_encode(["error" => "Not enough points"]);
         exit;
@@ -84,10 +81,9 @@ try {
         exit;
     }
 
-    // Récupérer les unlocks actuels
+    // Récupérer les items déjà débloqués
     $unlocks = json_decode($user[$column], true) ?? [];
 
-    // Vérifier si déjà acheté
     if (in_array($itemId, $unlocks)) {
         http_response_code(400);
         echo json_encode(["error" => "Item already owned"]);
@@ -98,15 +94,14 @@ try {
     $unlocks[] = $itemId;
 
     // Déduire les points
-    $newPoints = $points - intval($item["price"]);
+    $newPoints = $points - $price;
 
-    // Mise à jour en base
+    // Mise à jour
     $stmt = $pdo->prepare("
         UPDATE users
         SET points = ?, $column = ?
         WHERE id = ?
     ");
-
     $stmt->execute([
         $newPoints,
         json_encode($unlocks),

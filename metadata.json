@@ -1,5 +1,5 @@
 {
-  "name": "Lumina - Journal de Lecture",
+  "name": "Bookhunter - Reading Journal",
   "description": "Un journal de lecture personnel et social pour suivre vos lectures, gérer votre bibliothèque et rejoindre des clubs de lecture.",
   "requestFramePermissions": ["camera"]
 }
