@@ -44,11 +44,11 @@ try {
     // Renvoyer les bons noms pour le frontend
     echo json_encode([
         "id" => $user["id"],
-        "username" => $user["pseudo"],          // 🔥 correspond à profile.username
+        "pseudo" => $user["pseudo"],          // 🔥 correspond à profile.pseudo
         "email" => $user["email"],
         "avatar_url" => $user["avatar_url"],
         "points" => $user["points"],
-        "created_at" => $user["createdAt"],     // 🔥 correspond à profile.created_at
+        "createdAt" => $user["createdAt"],     // 🔥 correspond à profile.createdAt
         "unlocked_stickers" => $stickers,
         "unlocked_fonts" => $fonts,
         "unlocked_backgrounds" => $bgs

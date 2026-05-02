@@ -259,7 +259,7 @@ const BookClubPage = ({ user }: { user: User }) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         clubId: selectedClubId,
-        username: user.username,
+        pseudo: user.pseudo,
         message: newMessage,
       }),
     });

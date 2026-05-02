@@ -64,6 +64,7 @@ export interface BookForm {
   status: BookStatus;
   total_pages: number;
   cover_url: string;
+  stickers: string[];
 }
 
 // =========================

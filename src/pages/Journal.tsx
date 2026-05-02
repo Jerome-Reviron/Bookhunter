@@ -11,6 +11,18 @@ import {
   Loader2,
 } from "lucide-react";
 
+// 👉 AJOUTE LA FONCTION ICI, juste après les imports
+const safeJsonArray = (value: any) => {
+  try {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+};
+
 import { User, BookEntry, BookForm, Sticker } from "../types";
 import { BOOK_CATEGORIES } from "../constants/bookCategories";
 
@@ -38,6 +50,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
     status: "reading",
     total_pages: 0,
     cover_url: "",
+    stickers: [],
   });
 
   // Load stickers from DB
@@ -220,6 +233,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
           status: "reading",
           total_pages: 0,
           cover_url: "",
+          stickers: [],
         });
       } else {
         const errorData = await res.json();
@@ -271,7 +285,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
       <header className="flex justify-between items-end mb-12">
         <div>
           <p className="text-xs uppercase tracking-[0.2em] font-semibold opacity-40 mb-2">
-            Bienvenue, {user.username}
+            Bienvenue {user.pseudo}
           </p>
           <h2 className="text-5xl font-serif italic">Journal de Lecture</h2>
         </div>
@@ -535,7 +549,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                         "sans",
                         "serif",
                         "mono",
-                        ...JSON.parse(profile?.unlocked_fonts || "[]"),
+                        ...safeJsonArray(profile?.unlocked_fonts),
                       ].map((font) => (
                         <button
                           key={font}
@@ -563,7 +577,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     <div className="flex flex-wrap gap-2">
                       {[
                         "bg-white",
-                        ...JSON.parse(profile?.unlocked_backgrounds || "[]"),
+                        ...safeJsonArray(profile?.unlocked_backgrounds),
                       ].map((bg) => (
                         <button
                           key={bg}
@@ -579,6 +593,47 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                         />
                       ))}
                     </div>
+                  </div>
+                </div>
+
+                {/* CARD STICKERS */}
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 mb-3 block">
+                    Stickers débloqués
+                  </label>
+
+                  <div className="flex flex-wrap gap-2">
+                    {safeJsonArray(profile?.unlocked_stickers).map(
+                      (stickerId) => {
+                        const sticker = STICKERS.find(
+                          (s) => s.id === stickerId,
+                        );
+                        if (!sticker) return null;
+
+                        return (
+                          <button
+                            key={sticker.id}
+                            type="button"
+                            onClick={() =>
+                              setNewBook({
+                                ...newBook,
+                                stickers: [
+                                  ...(newBook.stickers || []),
+                                  sticker.id,
+                                ],
+                              })
+                            }
+                            className="w-10 h-10 rounded-xl border border-black/10 hover:border-accent/40 transition-all flex items-center justify-center bg-white"
+                          >
+                            <img
+                              src={sticker.url}
+                              alt={sticker.label}
+                              className="w-6 h-6 object-contain"
+                            />
+                          </button>
+                        );
+                      },
+                    )}
                   </div>
                 </div>
 

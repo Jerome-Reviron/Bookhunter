@@ -15,11 +15,14 @@ import { User, Sticker } from "../types";
 const ProfilePage = ({ user }: { user: User }) => {
   const [profile, setProfile] = useState<User | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  const [editedPseudo, setEditedPseudo] = useState("");
+  const [editedEmail, setEditedEmail] = useState("");
   const [avatarUrl, setAvatarUrl] = useState("");
 
   const [STICKERS, setSTICKERS] = useState<Sticker[]>([]);
 
-  // Load stickers from DB
+  // Load stickers
   useEffect(() => {
     fetch("/api/stickers/get.php")
       .then((res) => res.json())
@@ -31,18 +34,37 @@ const ProfilePage = ({ user }: { user: User }) => {
   useEffect(() => {
     fetch("/api/user/get.php")
       .then((res) => res.json())
-      .then(setProfile);
+      .then((data) => {
+        setProfile(data);
+        setEditedPseudo(data.pseudo);
+        setEditedEmail(data.email);
+        setAvatarUrl(data.avatar_url || "");
+      });
   }, [user.id]);
 
-  const handleUpdateAvatar = async () => {
+  // Save profile (pseudo + email + avatar)
+  const handleUpdateProfile = async () => {
     const res = await fetch("/api/user/update.php", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ avatar_url: avatarUrl }),
+      body: JSON.stringify({
+        pseudo: editedPseudo,
+        email: editedEmail,
+        avatar_url: avatarUrl,
+      }),
     });
 
     if (res.ok) {
-      setProfile((prev) => (prev ? { ...prev, avatar_url: avatarUrl } : null));
+      setProfile((prev) =>
+        prev
+          ? {
+              ...prev,
+              pseudo: editedPseudo,
+              email: editedEmail,
+              avatar_url: avatarUrl,
+            }
+          : null
+      );
       setIsEditing(false);
     }
   };
@@ -69,11 +91,26 @@ const ProfilePage = ({ user }: { user: User }) => {
   return (
     <div className="pb-24 md:pb-8 md:pl-72 p-6 max-w-4xl mx-auto">
       {/* HEADER */}
-      <header className="mb-12">
-        <h2 className="text-5xl font-serif italic mb-2">Mon Profil</h2>
-        <p className="text-ink/40 uppercase tracking-widest text-xs font-bold">
-          Membre depuis le {new Date(profile.createdAt).toLocaleDateString()}
-        </p>
+      <header className="mb-12 flex items-center justify-between">
+        <div>
+          <h2 className="text-5xl font-serif italic mb-2">Mon Profil</h2>
+          <p className="text-ink/40 uppercase tracking-widest text-xs font-bold">
+            Membre depuis le {new Date(profile.createdAt).toLocaleDateString()}
+          </p>
+        </div>
+
+        <button
+          onClick={() => {
+            setEditedPseudo(profile.pseudo);
+            setEditedEmail(profile.email);
+            setAvatarUrl(profile.avatar_url || "");
+            setIsEditing(true);
+          }}
+          className="bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow hover:scale-105 transition-transform flex items-center gap-2"
+        >
+          <Edit3 size={18} />
+          Modifier
+        </button>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
@@ -90,16 +127,6 @@ const ProfilePage = ({ user }: { user: User }) => {
                 <UserIcon size={48} className="text-accent/20" />
               )}
             </div>
-
-            <button
-              onClick={() => {
-                setAvatarUrl(profile.avatar_url || "");
-                setIsEditing(true);
-              }}
-              className="absolute bottom-0 right-0 bg-accent text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform"
-            >
-              <Edit3 size={16} />
-            </button>
           </div>
 
           <div className="text-center">
@@ -171,8 +198,8 @@ const ProfilePage = ({ user }: { user: User }) => {
                         f === "serif"
                           ? "font-serif"
                           : f === "sans"
-                            ? "font-sans"
-                            : "font-mono"
+                          ? "font-sans"
+                          : "font-mono"
                       }`}
                     >
                       {f}
@@ -202,7 +229,7 @@ const ProfilePage = ({ user }: { user: User }) => {
         </div>
       </div>
 
-      {/* MODAL EDIT AVATAR */}
+      {/* MODAL EDIT PROFILE */}
       <AnimatePresence>
         {isEditing && (
           <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-[80] flex items-center justify-center p-6">
@@ -213,13 +240,40 @@ const ProfilePage = ({ user }: { user: User }) => {
               className="bg-white w-full max-w-md p-8 rounded-[40px] shadow-2xl"
             >
               <h3 className="text-2xl font-serif italic mb-6">
-                Modifier l'avatar
+                Modifier mon profil
               </h3>
 
               <div className="space-y-6">
+                {/* PSEUDO */}
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
-                    Photo de profil
+                    Pseudo
+                  </label>
+                  <input
+                    type="text"
+                    value={editedPseudo}
+                    onChange={(e) => setEditedPseudo(e.target.value)}
+                    className="mt-2 w-full p-3 rounded-xl border border-black/10 bg-paper"
+                  />
+                </div>
+
+                {/* EMAIL */}
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
+                    Email
+                  </label>
+                  <input
+                    type="email"
+                    value={editedEmail}
+                    onChange={(e) => setEditedEmail(e.target.value)}
+                    className="mt-2 w-full p-3 rounded-xl border border-black/10 bg-paper"
+                  />
+                </div>
+
+                {/* AVATAR */}
+                <div>
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
+                    Avatar
                   </label>
 
                   <div className="mt-4 flex flex-col items-center gap-4">
@@ -255,6 +309,7 @@ const ProfilePage = ({ user }: { user: User }) => {
                   </div>
                 </div>
 
+                {/* BUTTONS */}
                 <div className="flex gap-4">
                   <button
                     onClick={() => setIsEditing(false)}
@@ -264,7 +319,7 @@ const ProfilePage = ({ user }: { user: User }) => {
                   </button>
 
                   <button
-                    onClick={handleUpdateAvatar}
+                    onClick={handleUpdateProfile}
                     className="flex-1 bg-accent text-white p-4 rounded-2xl font-bold"
                   >
                     Enregistrer
