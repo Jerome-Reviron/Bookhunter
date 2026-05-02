@@ -1,27 +1,37 @@
-const CACHE_NAME = 'lumina-cache-v1';
+const CACHE_NAME = "bookhunter-cache-v1";
+
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/src/main.tsx',
-  '/src/App.tsx',
-  '/src/index.css'
+  "/",
+  "/index.html",
+  "/src/main.tsx",
+  "/src/App.tsx",
+  "/src/index.css",
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => cache.addAll(urlsToCache)),
   );
 });
 
-self.addEventListener('fetch', event => {
-  event.respondWith(
-    caches.match(event.request)
-      .then(response => {
-        if (response) {
-          return response;
-        }
-        return fetch(event.request);
-      })
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter((key) => key !== CACHE_NAME)
+            .map((key) => caches.delete(key)),
+        ),
+      ),
   );
 });
+
+// self.addEventListener('fetch', event => {
+//   event.respondWith(
+//     caches.match(event.request).then(response => {
+//       return response || fetch(event.request);
+//     })
+//   );
+// });
