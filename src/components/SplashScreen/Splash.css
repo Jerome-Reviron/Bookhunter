@@ -1,0 +1,50 @@
+.splash-container {
+  position: fixed;
+  inset: 0;
+  background: #5a5a40; /* Couleur Bookhunter */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  overflow: hidden;
+
+  /* Effet papier texturé léger */
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.08) 1px,
+    transparent 1px
+  );
+  background-size: 4px 4px;
+}
+
+.splash-logo {
+  width: 160px;
+  animation: bookhunter-intro 5s ease forwards;
+  filter: drop-shadow(0 0 12px rgba(255, 255, 255, 0.25));
+}
+
+/* Animation plus douce, moins “néon”, plus “cinématique nature” */
+@keyframes bookhunter-intro {
+  0% {
+    transform: scale(0.7);
+    opacity: 0;
+    filter: blur(12px) brightness(0.6);
+  }
+
+  35% {
+    transform: scale(1.05);
+    opacity: 1;
+    filter: blur(0px) brightness(1.05);
+  }
+
+  70% {
+    transform: scale(1.15);
+    opacity: 1;
+    filter: drop-shadow(0 0 18px rgba(255, 255, 255, 0.2));
+  }
+
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+    filter: blur(10px) brightness(1.4);
+  }
+}

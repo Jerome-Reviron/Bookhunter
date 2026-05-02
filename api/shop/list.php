@@ -2,30 +2,24 @@
 require_once __DIR__ . '/../db.php';
 require_once __DIR__ . '/../auth.php';
 
-// L'utilisateur peut être connecté ou non, mais on garde la session ouverte
-$userId = $_SESSION['user_id'] ?? null;
-
 try {
     $stmt = $pdo->prepare("
         SELECT 
             id,
             type,
             name,
-            price,
+            price_points,
+            stripe_url,
             image_url,
-            rarity,
-            description
+            value
         FROM shop_items
-        ORDER BY type ASC, price ASC
+        ORDER BY type ASC, price_points ASC
     ");
 
     $stmt->execute();
     $items = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    echo json_encode([
-        "items" => $items,
-        "user_id" => $userId
-    ]);
+    echo json_encode($items);
 
 } catch (Exception $e) {
     http_response_code(500);

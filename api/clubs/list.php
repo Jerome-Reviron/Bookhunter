@@ -2,7 +2,6 @@
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../db.php';
 
-// L'utilisateur doit être connecté pour voir les clubs
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(["error" => "Not authenticated"]);
@@ -18,15 +17,16 @@ try {
             id,
             name,
             description,
-            icon_url,
-            createdAt
+            owner_id,
+            type,
+            created_at
         FROM clubs
         ORDER BY id ASC
     ");
     $stmt->execute();
     $clubs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // Récupérer les membres de chaque club
+    // Récupérer les membres
     $stmt = $pdo->prepare("
         SELECT 
             club_id,
@@ -53,6 +53,7 @@ try {
         $club["members"] = $clubMembers[$cid] ?? [];
         $club["member_count"] = count($club["members"]);
         $club["is_member"] = in_array($userId, $club["members"]);
+        $club["is_owner"] = ($club["owner_id"] == $userId);
     }
 
     echo json_encode($clubs);
