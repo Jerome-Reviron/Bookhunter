@@ -65,6 +65,8 @@ export interface BookForm {
   total_pages: number;
   cover_url: string;
   stickers: string[];
+  card_bg?: string;
+  card_font?: string;
 }
 
 // =========================

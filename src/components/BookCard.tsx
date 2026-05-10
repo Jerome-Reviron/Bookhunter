@@ -4,6 +4,8 @@ import { motion } from "motion/react";
 import { Book, Clock, Star } from "lucide-react";
 import StickerDisplay from "./StickerDisplay";
 import { BookEntry, Sticker } from "../types";
+import "../styles/backgrounds.css";
+import "../styles/fonts.css";
 
 interface BookCardProps {
   book: BookEntry;
@@ -71,14 +73,8 @@ const BookCard: React.FC<BookCardProps> = ({
   return (
     <motion.div
       layout
-      className={`p-6 rounded-3xl border border-black/5 shadow-sm group transition-all ${
+      className={`min-w-[260px] sm:min-w-[320px] md:min-w-[400px] lg:min-w-[420px] p-6 rounded-3xl border border-black/5 shadow-sm group transition-all ${
         book.card_bg || "bg-white"
-      } ${
-        book.card_font === "serif"
-          ? "font-serif"
-          : book.card_font === "mono"
-            ? "font-mono"
-            : "font-sans"
       }`}
     >
       <div className="flex gap-6">
@@ -107,12 +103,12 @@ const BookCard: React.FC<BookCardProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 min-w-0">
+        <div className="flex-1 min-w-0 bg-[#f8f5ef]/90 rounded-xl p-3 text-accent">
           {/* Title */}
           <div className="flex justify-between items-start mb-1">
             <h4
               onClick={() => navigate(`/book/${book.id}`)}
-              className="text-lg font-serif italic line-clamp-1 cursor-pointer hover:text-accent transition-colors"
+              className={`text-lg italic font-semibold cursor-pointer hover:text-accent transition-colors ${book.card_font} whitespace-normal break-words`}
             >
               {book.title}
             </h4>
@@ -120,7 +116,9 @@ const BookCard: React.FC<BookCardProps> = ({
 
           {/* Author + Rating */}
           <div className="flex justify-between items-center mb-3">
-            <p className="text-ink/60 text-xs">{book.author}</p>
+            <p className="text-xs font-semibold text-accent/90 tracking-wide">
+              {book.author}
+            </p>
 
             <div className="flex gap-0.5">
               {[1, 2, 3, 4, 5].map((star) => (
@@ -132,11 +130,11 @@ const BookCard: React.FC<BookCardProps> = ({
                   }}
                 >
                   <Star
-                    size={10}
+                    size={14}
                     className={
                       star <= (book.rating || 0)
-                        ? "fill-accent text-accent"
-                        : "text-black/10"
+                        ? "fill-accent text-accent drop-shadow-sm"
+                        : "text-accent/80"
                     }
                   />
                 </button>
@@ -146,15 +144,16 @@ const BookCard: React.FC<BookCardProps> = ({
 
           {/* Progress */}
           <div className="mb-4">
-            <div className="flex justify-between text-[10px] uppercase tracking-widest font-bold opacity-40 mb-1">
+            <div className="text-[10px] uppercase tracking-widest font-bold mb-1">
               <span>Progression</span>
+              <br />
               <span>
-                {localPage} / {book.total_pages} p. ({progress}%)
+                {localPage} / {book.total_pages} pages. ({progress}%)
               </span>
             </div>
 
             <div className="relative w-full h-4 flex items-center group/slider">
-              <div className="absolute inset-0 bg-accent/10 h-1.5 my-auto rounded-full overflow-hidden">
+              <div className="absolute inset-0 bg-accent/30 h-1.5 my-auto rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
                   animate={{ width: `${progress}%` }}
@@ -202,13 +201,13 @@ const BookCard: React.FC<BookCardProps> = ({
             <div className="flex gap-2">
               <button
                 onClick={() => onUpdateProgress(10)}
-                className="flex-1 bg-accent/5 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                className="flex-1 bg-accent/30 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
               >
                 +10 p.
               </button>
               <button
                 onClick={() => onUpdateProgress(25)}
-                className="flex-1 bg-accent/5 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                className="flex-1 bg-accent/30 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
               >
                 +25 p.
               </button>

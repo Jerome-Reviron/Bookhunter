@@ -44,7 +44,7 @@ if ($stmt->rowCount() === 0) {
 try {
     // Ajouter la session
     $stmt = $pdo->prepare("
-        INSERT INTO reading_sessions (user_id, book_id, pages_read, duration_minutes, createdAt)
+        INSERT INTO reading_sessions (user_id, book_id, pages_read, duration_minutes, timestamp)
         VALUES (?, ?, ?, ?, ?)
     ");
 

@@ -4,27 +4,15 @@ require_once __DIR__ . '/../db.php';
 
 header("Content-Type: application/json; charset=utf-8");
 
-// 🔐 Sécurité session
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
     echo json_encode(["error" => "Not authenticated"]);
     exit;
 }
 
-$userId = intval($_SESSION['user_id']);
-
 try {
-    $stmt = $pdo->prepare("
-        SELECT s.*
-        FROM user_stickers us
-        JOIN stickers s ON s.id = us.sticker_id
-        WHERE us.user_id = ?
-        ORDER BY s.label ASC
-    ");
-    $stmt->execute([$userId]);
-
+    $stmt = $pdo->query("SELECT * FROM fonts ORDER BY label ASC");
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
-
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(["error" => "Database error"]);

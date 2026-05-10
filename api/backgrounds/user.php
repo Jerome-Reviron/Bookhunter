@@ -15,28 +15,15 @@ $userId = intval($_SESSION['user_id']);
 
 try {
     $stmt = $pdo->prepare("
-        SELECT 
-            id,
-            pseudo,
-            email,
-            avatar_url,
-            points,
-            createdAt
-        FROM users
-        WHERE id = ?
-        LIMIT 1
+        SELECT b.*
+        FROM user_backgrounds ub
+        JOIN backgrounds b ON b.id = ub.background_id
+        WHERE ub.user_id = ?
+        ORDER BY b.label ASC
     ");
-
     $stmt->execute([$userId]);
-    $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    if (!$user) {
-        http_response_code(404);
-        echo json_encode(["error" => "User not found"]);
-        exit;
-    }
-
-    echo json_encode($user);
+    echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
 
 } catch (Exception $e) {
     http_response_code(500);

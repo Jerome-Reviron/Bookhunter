@@ -49,9 +49,9 @@ const BookDetailPage = ({ user }: { user: User }) => {
     if (!id) return;
     try {
       const [bookRes, sessionsRes, profileRes] = await Promise.all([
-        fetch(`/api/books/${id}`),
-        fetch(`/api/sessions/${id}`),
-        fetch(`/api/user/${user.id}`),
+        fetch(`/api/books/get.php?id=${id}`),
+        fetch(`/api/sessions/get.php?id=${id}`),
+        fetch(`/api/user/get.php?id=${user.id}`),
       ]);
 
       if (bookRes.ok) {
@@ -151,6 +151,17 @@ const BookDetailPage = ({ user }: { user: User }) => {
         <Loader2 className="animate-spin text-accent" size={48} />
       </div>
     );
+
+  const safeJsonArray = (value: any): string[] => {
+    if (!value) return [];
+    if (Array.isArray(value)) return value;
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  };
 
   if (error)
     return (
@@ -601,21 +612,21 @@ const BookDetailPage = ({ user }: { user: User }) => {
                     <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 block mb-4">
                       Personnalisation (Stickers - Max 5)
                     </label>
+
                     <div className="flex flex-wrap gap-4 mb-2">
                       {STICKERS.map((sticker) => {
-                        let currentStickers: string[] = [];
-                        try {
-                          currentStickers = editData.stickers
-                            ? JSON.parse(editData.stickers)
-                            : [];
-                        } catch {
-                          currentStickers = [];
-                        }
+                        const currentStickers = safeJsonArray(
+                          editData.stickers,
+                        );
+                        const unlockedStickers = safeJsonArray(
+                          profile?.unlocked_stickers,
+                        );
 
                         const isSelected = currentStickers.includes(sticker.id);
-                        const isUnlocked = JSON.parse(
-                          profile?.unlocked_stickers || "[]",
-                        ).includes(sticker.id);
+                        const isUnlocked = unlockedStickers.includes(
+                          sticker.id,
+                        );
+
                         const isDefault = [
                           "heart",
                           "star",
@@ -635,13 +646,15 @@ const BookDetailPage = ({ user }: { user: User }) => {
                             type="button"
                             onClick={() => {
                               let newStickers = [...currentStickers];
+
                               if (isSelected) {
                                 newStickers = newStickers.filter(
-                                  (id: string) => id !== sticker.id,
+                                  (id) => id !== sticker.id,
                                 );
                               } else if (newStickers.length < 5) {
                                 newStickers.push(sticker.id);
                               }
+
                               setEditData({
                                 ...editData,
                                 stickers: JSON.stringify(newStickers),
@@ -662,22 +675,25 @@ const BookDetailPage = ({ user }: { user: User }) => {
                         );
                       })}
                     </div>
+
                     <p className="text-[10px] text-ink/40 italic">
                       Cliquez sur un sticker pour l'ajouter ou le retirer.
                     </p>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    {/* Police */}
                     <div>
                       <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 block mb-4">
                         Police de la carte
                       </label>
+
                       <div className="flex flex-wrap gap-2">
                         {[
                           "sans",
                           "serif",
                           "mono",
-                          ...JSON.parse(profile?.unlocked_fonts || "[]"),
+                          ...safeJsonArray(profile?.unlocked_fonts),
                         ].map((font) => (
                           <button
                             key={font}
@@ -696,14 +712,17 @@ const BookDetailPage = ({ user }: { user: User }) => {
                         ))}
                       </div>
                     </div>
+
+                    {/* Background */}
                     <div>
                       <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 block mb-4">
                         Arrière-plan de la carte
                       </label>
+
                       <div className="flex flex-wrap gap-2">
                         {[
                           "bg-white",
-                          ...JSON.parse(profile?.unlocked_backgrounds || "[]"),
+                          ...safeJsonArray(profile?.unlocked_backgrounds),
                         ].map((bg) => (
                           <button
                             key={bg}
@@ -731,6 +750,7 @@ const BookDetailPage = ({ user }: { user: User }) => {
                   >
                     Annuler
                   </button>
+
                   <button
                     type="submit"
                     className="flex-1 bg-accent text-white p-4 rounded-2xl font-bold"

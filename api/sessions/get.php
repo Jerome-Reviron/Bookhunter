@@ -28,20 +28,20 @@ try {
 
         // Récupérer les sessions pour un livre précis
         $stmt = $pdo->prepare("
-            SELECT id, book_id, pages_read, duration_minutes, createdAt
+            SELECT id, book_id, pages_read, duration_minutes, timestamp
             FROM reading_sessions
             WHERE user_id = ? AND book_id = ?
-            ORDER BY createdAt DESC
+            ORDER BY timestamp DESC
         ");
         $stmt->execute([$userId, $bookId]);
 
     } else {
         // Récupérer toutes les sessions de l'utilisateur
         $stmt = $pdo->prepare("
-            SELECT id, book_id, pages_read, duration_minutes, createdAt
+            SELECT id, book_id, pages_read, duration_minutes, timestamp
             FROM reading_sessions
             WHERE user_id = ?
-            ORDER BY createdAt DESC
+            ORDER BY timestamp DESC
         ");
         $stmt->execute([$userId]);
     }

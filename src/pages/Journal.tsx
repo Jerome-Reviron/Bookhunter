@@ -36,6 +36,8 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const [profile, setProfile] = useState<User | null>(null);
 
   const [STICKERS, setSTICKERS] = useState<Sticker[]>([]);
+  const [backgrounds, setBackgrounds] = useState<any[]>([]);
+  const [fonts, setFonts] = useState<any[]>([]);
 
   const [showAdd, setShowAdd] = useState(false);
   const [showScanner, setShowScanner] = useState(false);
@@ -51,22 +53,42 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
     total_pages: 0,
     cover_url: "",
     stickers: [],
+    card_font: "",
+    card_bg: "",
   });
 
   // Load stickers from DB
   useEffect(() => {
-    fetch("/api/stickers/get.php")
+    fetch("/api/stickers/user.php", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setSTICKERS(data))
       .catch(() => setSTICKERS([]));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/backgrounds/user.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setBackgrounds(data))
+      .catch(() => setBackgrounds([]));
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/fonts/user.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setFonts(data))
+      .catch(() => setFonts([]));
   }, []);
 
   // Load books + profile
   const fetchBooks = async () => {
     try {
       const [booksRes, profileRes] = await Promise.all([
-        fetch(`/api/users/books.php?user_id=${user.id}`),
-        fetch(`/api/user/get.php?user_id=${user.id}`),
+        fetch(`/api/users/books.php?user_id=${user.id}`, {
+          credentials: "include",
+        }),
+        fetch(`/api/user/get.php?user_id=${user.id}`, {
+          credentials: "include",
+        }),
       ]);
 
       if (booksRes.status === 401) {
@@ -215,10 +237,17 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("/api/books", {
+      const res = await fetch("http://localhost/Bookhunter/api/books/add.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...newBook, userId: user.id }),
+        credentials: "include",
+        body: JSON.stringify({
+          ...newBook,
+          userId: user.id,
+          card_font: newBook.card_font,
+          card_bg: newBook.card_bg,
+          stickers: newBook.stickers ?? [],
+        }),
       });
 
       if (res.ok) {
@@ -234,6 +263,8 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
           total_pages: 0,
           cover_url: "",
           stickers: [],
+          card_font: "",
+          card_bg: "",
         });
       } else {
         const errorData = await res.json();
@@ -249,6 +280,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const updateProgress = async (id: number, pages: number) => {
     await fetch("/api/sessions", {
       method: "POST",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         bookId: id,
@@ -263,6 +295,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const updateBook = async (id: number, data: any) => {
     await fetch(`/api/books/${id}`, {
       method: "PATCH",
+      credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
     });
@@ -272,12 +305,16 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   // Delete book
   const deleteBook = async (id: number) => {
     if (!confirm("Supprimer ce livre ?")) return;
-    await fetch(`/api/books/${id}`, { method: "DELETE" });
+    await fetch(`/api/books/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
     fetchBooks();
   };
 
   const reading = books.filter((b) => b.status === "reading");
   const finished = books.filter((b) => b.status === "finished");
+  const availableBackgrounds = backgrounds;
 
   return (
     <div className="pb-24 md:pb-8 md:pl-72 p-6 max-w-6xl mx-auto">
@@ -308,7 +345,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
           </span>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
           {reading.map((book) => (
             <BookCard
               key={book.id}
@@ -544,26 +581,26 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 mb-3 block">
                       Police de la carte
                     </label>
+
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        "sans",
-                        "serif",
-                        "mono",
-                        ...safeJsonArray(profile?.unlocked_fonts),
-                      ].map((font) => (
+                      {fonts.map((font) => (
                         <button
-                          key={font}
+                          key={font.id}
                           type="button"
-                          onClick={() =>
-                            setNewBook({ ...newBook, card_font: font } as any)
+                          onClick={
+                            () =>
+                              setNewBook({
+                                ...newBook,
+                                card_font: font.css_class,
+                              }) // ✅ stocke la classe CSS
                           }
-                          className={`px-4 py-2 rounded-xl border text-xs font-bold capitalize transition-all ${
-                            (newBook as any).card_font === font
+                          className={`px-4 py-2 rounded-xl border text-xs font-bold capitalize transition-all ${font.css_class} ${
+                            newBook.card_font === font.css_class
                               ? "bg-accent text-white border-accent"
                               : "bg-paper border-black/5 hover:border-accent/30"
                           }`}
                         >
-                          {font}
+                          {font.label}
                         </button>
                       ))}
                     </div>
@@ -574,22 +611,26 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 mb-3 block">
                       Arrière-plan de la carte
                     </label>
+
                     <div className="flex flex-wrap gap-2">
-                      {[
-                        "bg-white",
-                        ...safeJsonArray(profile?.unlocked_backgrounds),
-                      ].map((bg) => (
+                      {availableBackgrounds.map((bg) => (
                         <button
-                          key={bg}
+                          key={bg.id}
                           type="button"
                           onClick={() =>
-                            setNewBook({ ...newBook, card_bg: bg } as any)
+                            setNewBook({
+                              ...newBook,
+                              card_bg: bg.css_class, // ✅ on stocke la classe CSS
+                            })
                           }
-                          className={`w-10 h-10 rounded-xl border transition-all ${
-                            (newBook as any).card_bg === bg
-                              ? "ring-2 ring-accent ring-offset-2"
-                              : "border-black/5 hover:border-accent/30"
-                          } ${bg === "bg-white" ? "bg-white" : bg}`}
+                          className={`w-10 h-10 rounded-xl border transition-all
+                            ${
+                              newBook.card_bg === bg.css_class
+                                ? "ring-2 ring-accent ring-offset-2"
+                                : "border-black/5 hover:border-accent/30"
+                            }
+                            ${bg.css_class}
+                          `}
                         />
                       ))}
                     </div>
@@ -603,37 +644,33 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                   </label>
 
                   <div className="flex flex-wrap gap-2">
-                    {safeJsonArray(profile?.unlocked_stickers).map(
-                      (stickerId) => {
-                        const sticker = STICKERS.find(
-                          (s) => s.id === stickerId,
-                        );
-                        if (!sticker) return null;
-
-                        return (
-                          <button
-                            key={sticker.id}
-                            type="button"
-                            onClick={() =>
-                              setNewBook({
-                                ...newBook,
-                                stickers: [
-                                  ...(newBook.stickers || []),
-                                  sticker.id,
-                                ],
-                              })
-                            }
-                            className="w-10 h-10 rounded-xl border border-black/10 hover:border-accent/40 transition-all flex items-center justify-center bg-white"
-                          >
-                            <img
-                              src={sticker.url}
-                              alt={sticker.label}
-                              className="w-6 h-6 object-contain"
-                            />
-                          </button>
-                        );
-                      },
-                    )}
+                    {STICKERS.map((sticker) => (
+                      <button
+                        key={sticker.id}
+                        type="button"
+                        onClick={() =>
+                          setNewBook({
+                            ...newBook,
+                            stickers: newBook.stickers.includes(sticker.id)
+                              ? newBook.stickers.filter((s) => s !== sticker.id)
+                              : [...newBook.stickers, sticker.id],
+                          })
+                        }
+                        className={`w-10 h-10 rounded-xl border transition-all flex items-center justify-center bg-white
+          ${
+            newBook.stickers.includes(sticker.id)
+              ? "border-accent ring-2 ring-accent ring-offset-2"
+              : "border-black/10 hover:border-accent/40"
+          }
+        `}
+                      >
+                        <img
+                          src={sticker.url}
+                          alt={sticker.label}
+                          className="w-6 h-6 object-contain"
+                        />
+                      </button>
+                    ))}
                   </div>
                 </div>
 

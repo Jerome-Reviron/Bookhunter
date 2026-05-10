@@ -1,0 +1,310 @@
+/* ===========================
+   1) FONDS UNIS
+   =========================== */
+
+.bg-uni-white {
+  background-color: #ffffff;
+}
+.bg-uni-black {
+  background-color: #000000;
+}
+.bg-uni-gray {
+  background-color: #6b7280;
+}
+.bg-uni-lightgray {
+  background-color: #d1d5db;
+}
+.bg-uni-blue {
+  background-color: #3b82f6;
+}
+.bg-uni-red {
+  background-color: #ef4444;
+}
+.bg-uni-green {
+  background-color: #22c55e;
+}
+.bg-uni-yellow {
+  background-color: #facc15;
+}
+.bg-uni-purple {
+  background-color: #a855f7;
+}
+.bg-uni-brown {
+  background-color: #8b5e3c;
+}
+
+/* ===========================
+   2) DÉGRADÉS GAUCHE → DROITE
+   =========================== */
+
+.bg-grad-blue {
+  background: linear-gradient(to right, #3b82f6, #60a5fa);
+}
+
+.bg-grad-red {
+  background: linear-gradient(to right, #ef4444, #f87171);
+}
+
+.bg-grad-green {
+  background: linear-gradient(to right, #22c55e, #4ade80);
+}
+
+.bg-grad-purple {
+  background: linear-gradient(to right, #a855f7, #c084fc);
+}
+
+.bg-grad-orange {
+  background: linear-gradient(to right, #fb923c, #fdba74);
+}
+
+.bg-grad-pink {
+  background: linear-gradient(to right, #ec4899, #f472b6);
+}
+
+.bg-grad-cyan {
+  background: linear-gradient(to right, #06b6d4, #22d3ee);
+}
+
+.bg-grad-gray {
+  background: linear-gradient(to right, #6b7280, #9ca3af);
+}
+
+.bg-grad-gold {
+  background: linear-gradient(to right, #fbbf24, #f59e0b);
+}
+
+.bg-grad-sunset {
+  background: linear-gradient(to right, #fb7185, #fbbf24);
+}
+
+/* ===========================
+   3) MOTIFS GRAPHIQUES
+   =========================== */
+
+.bg-pattern-dots {
+  background-image: radial-gradient(#000 1px, transparent 1px);
+  background-size: 10px 10px;
+}
+
+.bg-pattern-lines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    #000 0px,
+    #000 1px,
+    transparent 1px,
+    transparent 6px
+  );
+}
+
+.bg-pattern-grid {
+  background-image:
+    linear-gradient(#000 1px, transparent 1px),
+    linear-gradient(90deg, #000 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+.bg-pattern-triangles {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #000 0,
+    #000 2px,
+    transparent 2px,
+    transparent 10px
+  );
+}
+
+.bg-pattern-squares {
+  background-image:
+    linear-gradient(#000 2px, transparent 2px),
+    linear-gradient(90deg, #000 2px, transparent 2px);
+  background-size: 25px 25px;
+}
+
+.bg-pattern-diamond {
+  background-image: repeating-linear-gradient(
+    45deg,
+    #000 0,
+    #000 2px,
+    transparent 2px,
+    transparent 12px
+  );
+}
+
+.bg-pattern-waves {
+  background-image: repeating-radial-gradient(
+    circle at 0 0,
+    #000 0,
+    #000 2px,
+    transparent 2px,
+    transparent 20px
+  );
+}
+
+.bg-pattern-zigzag {
+  background-image: repeating-linear-gradient(
+    135deg,
+    #000 0,
+    #000 2px,
+    transparent 2px,
+    transparent 8px
+  );
+}
+
+.bg-pattern-circles {
+  background-image: radial-gradient(circle, #000 10%, transparent 11%);
+  background-size: 20px 20px;
+}
+
+.bg-pattern-cross {
+  background-image:
+    linear-gradient(#000 2px, transparent 2px),
+    linear-gradient(90deg, #000 2px, transparent 2px);
+  background-size: 15px 15px;
+}
+
+/* ===========================
+   4) EFFETS HOLOGRAPHIQUES
+   =========================== */
+
+@keyframes holo-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+.bg-holo-blue {
+  background: linear-gradient(45deg, #3b82f6, #60a5fa, #93c5fd);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-pink {
+  background: linear-gradient(45deg, #ec4899, #f472b6, #f9a8d4);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-green {
+  background: linear-gradient(45deg, #22c55e, #4ade80, #86efac);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-purple {
+  background: linear-gradient(45deg, #a855f7, #c084fc, #e9d5ff);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-silver {
+  background: linear-gradient(45deg, #d1d5db, #e5e7eb, #f3f4f6);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-gold {
+  background: linear-gradient(45deg, #fbbf24, #f59e0b, #d97706);
+  background-size: 300% 300%;
+  animation: holo-shift 8s ease infinite;
+}
+
+.bg-holo-rainbow {
+  background: linear-gradient(
+    45deg,
+    #ef4444,
+    #f59e0b,
+    #22c55e,
+    #3b82f6,
+    #a855f7
+  );
+  background-size: 500% 500%;
+  animation: holo-shift 10s ease infinite;
+}
+
+.bg-holo-soft {
+  background: linear-gradient(45deg, #f3e8ff, #e0f2fe, #dcfce7);
+  background-size: 300% 300%;
+  animation: holo-shift 12s ease infinite;
+}
+
+.bg-holo-dark {
+  background: linear-gradient(45deg, #1f2937, #4b5563, #6b7280);
+  background-size: 300% 300%;
+  animation: holo-shift 10s ease infinite;
+}
+
+.bg-holo-light {
+  background: linear-gradient(45deg, #f9fafb, #f3f4f6, #e5e7eb);
+  background-size: 300% 300%;
+  animation: holo-shift 12s ease infinite;
+}
+
+/* ===========================
+   5) MOTIFS LITTÉRAIRES
+   =========================== */
+
+.bg-lit-paper {
+  background-image: url("../assets/backgrounds/paper.jpg");
+  background-size: cover;
+}
+
+.bg-lit-notebook {
+  background-image: repeating-linear-gradient(
+    white 0px,
+    white 24px,
+    #d1d5db 25px
+  );
+}
+
+.bg-lit-lines {
+  background-image: repeating-linear-gradient(
+    white 0px,
+    white 22px,
+    #9ca3af 23px
+  );
+}
+
+.bg-lit-feather {
+  background-image: url("../assets/backgrounds/feather.jpg");
+  background-size: contain;
+  background-repeat: repeat;
+}
+
+.bg-lit-books {
+  background-image: url("../assets/backgrounds/books.jpg");
+  background-size: contain;
+  background-repeat: repeat;
+}
+
+.bg-lit-library {
+  background-image: url("../assets/backgrounds/library.jpg");
+  background-size: cover;
+}
+
+.bg-lit-scroll {
+  background-image: url("../assets/backgrounds/scroll.jpg");
+  background-size: cover;
+}
+
+.bg-lit-ink {
+  background-image: url("../assets/backgrounds/ink.jpg");
+  background-size: contain;
+  background-repeat: repeat;
+}
+
+.bg-lit-typewriter {
+  background-image: url("../assets/backgrounds/typewriter.jpg");
+  background-size: contain;
+  background-repeat: repeat;
+}
+
+.bg-lit-oldpaper {
+  background-image: url("../assets/backgrounds/oldpaper.jpg");
+  background-size: cover;
+}

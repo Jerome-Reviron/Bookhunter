@@ -1,0 +1,24 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Lobster&display=swap");
+
+/* Sans — Inter */
+.font-sans {
+  font-family: "Inter", sans-serif;
+}
+
+/* Serif — Playfair Display */
+.font-serif {
+  font-family: "Playfair Display", serif;
+}
+
+/* Mono — JetBrains Mono */
+.font-mono {
+  font-family: "JetBrains Mono", monospace;
+}
+
+/* Script — Lobster */
+.font-lobster {
+  font-family: "Lobster", cursive;
+}
