@@ -67,6 +67,7 @@ export interface BookForm {
   stickers: string[];
   card_bg?: string;
   card_font?: string;
+  notes?: string;
 }
 
 // =========================

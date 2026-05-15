@@ -410,9 +410,9 @@ const BookDetailPage = ({ user }: { user: User }) => {
                   Aucune session enregistrée.
                 </p>
               ) : (
-                sessions.map((session) => (
+                sessions.map((session, index) => (
                   <div
-                    key={session.id}
+                    key={session.id ?? `session-${index}`}
                     className="bg-white p-6 rounded-3xl border border-black/5 flex justify-between items-center"
                   >
                     <div className="flex items-center gap-4">

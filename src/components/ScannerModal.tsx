@@ -60,9 +60,19 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
         } else {
           startScanner();
         }
-      }, 500);
+      }, 300);
 
-      const startScanner = () => {
+      return () => clearTimeout(timer);
+
+      // --- Fonction interne startScanner ---
+      function startScanner() {
+        // 🔹 Nettoyage complet du conteneur avant chaque démarrage
+        const readerElement = document.getElementById("reader");
+        if (readerElement) {
+          readerElement.innerHTML = "";
+        }
+
+        // 🔹 Instanciation du scanner
         const html5QrCode = new Html5Qrcode("reader", {
           formatsToSupport: [
             Html5QrcodeSupportedFormats.EAN_13,
@@ -85,9 +95,10 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
           },
         };
 
+        // 🔹 Démarrage du flux vidéo
         html5QrCode
           .start(
-            selectedCameraId,
+            selectedCameraId as string, // ⬅️ FIX TypeScript ici
             config,
             (decodedText) => {
               if (scanningRef.current) return;
@@ -97,16 +108,13 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
 
               html5QrCode
                 .stop()
-                .then(() => {
-                  onScan(decodedText);
-                  onClose();
-                })
-                .catch(() => {
-                  onScan(decodedText);
-                  onClose();
-                });
+                .then(() => onScan(decodedText))
+                .catch(() => onScan(decodedText));
             },
             () => {},
+          )
+          .then(() =>
+            console.log("Scanner démarré sur caméra:", selectedCameraId),
           )
           .catch((err) => {
             setError(
@@ -114,16 +122,13 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
             );
             console.error(err);
           });
-      };
-
-      return () => clearTimeout(timer);
+      }
     }, [selectedCameraId]);
 
     const handleManualSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       if (manualIsbn.trim()) {
         onScan(manualIsbn.trim());
-        onClose();
       }
     };
 
@@ -149,11 +154,17 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
 
           {/* Scanner */}
           <div className="p-5">
-            <div
-              id="reader"
-              className="w-full aspect-[4/3] bg-black rounded-[32px] overflow-hidden shadow-inner relative"
-            >
-              <div className="absolute inset-0 border-2 border-accent/30 rounded-[32px] pointer-events-none z-20">
+            {/* 🔹 Isolation DOM pour éviter les clés dupliquées */}
+            <div className="relative">
+              {/* Conteneur du scanner */}
+              <div
+                id="reader"
+                key={selectedCameraId}
+                className="w-full aspect-[4/3] bg-black rounded-[32px] overflow-hidden shadow-inner relative"
+              />
+
+              {/* Overlay premium */}
+              <div className="absolute inset-0 border-2 border-accent/30 rounded-[32px] pointer-events-none z-[1]">
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[130px] border-2 border-accent rounded-lg shadow-[0_0_0_999px_rgba(0,0,0,0.5)]"></div>
               </div>
             </div>

@@ -2,14 +2,13 @@
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../db.php';
 
-header("Content-Type: application/json");
+header("Content-Type: application/json; charset=utf-8");
 
 $userId = intval($_SESSION['user_id']);
 $bookId = isset($_GET['id']) ? intval($_GET['id']) : null;
 
 try {
     if ($bookId) {
-        // Récupérer un livre précis
         $stmt = $pdo->prepare("
             SELECT id, user_id, title, author, category, support, edition,
                    status, rating, start_date, end_date, cover_url,
@@ -28,9 +27,13 @@ try {
             exit;
         }
 
+        // Normalisation
+        $book['notes'] = $book['notes'] ?? '';
+        $book['tags'] = $book['tags'] ?? '[]';
+        $book['stickers'] = $book['stickers'] ?? '[]';
+
         echo json_encode($book);
     } else {
-        // Récupérer tous les livres de l'utilisateur
         $stmt = $pdo->prepare("
             SELECT id, user_id, title, author, category, support, edition,
                    status, rating, start_date, end_date, cover_url,
@@ -41,7 +44,16 @@ try {
             ORDER BY id DESC
         ");
         $stmt->execute([$userId]);
-        echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+        $books = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($books as &$book) {
+            $book['notes'] = $book['notes'] ?? '';
+            $book['tags'] = $book['tags'] ?? '[]';
+            $book['stickers'] = $book['stickers'] ?? '[]';
+        }
+        unset($book);
+
+        echo json_encode($books);
     }
 } catch (Exception $e) {
     http_response_code(500);

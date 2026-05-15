@@ -96,8 +96,8 @@ const ShopPage = ({ user }: { user: User }) => {
           </p>
         </div>
 
-        <div className="flex items-center gap-2 bg-accent text-white px-8 py-4 rounded-full font-bold shadow-lg shadow-accent/20">
-          <Coins size={20} className="text-white" />
+        <div className="flex items-center gap-2 bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow transition-transform hover:scale-105">
+          <Coins size={18} className="text-white" />
           <span className="text-base font-bold">{points} Points</span>
         </div>
       </header>

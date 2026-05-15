@@ -29,6 +29,67 @@ import { BOOK_CATEGORIES } from "../constants/bookCategories";
 import BookCard from "../components/BookCard";
 import ScannerModal from "../components/ScannerModal";
 
+// --- OpenLibrary FULL SCRAPER ---
+// Récupère : titre, auteur, couverture HD, pages, éditeur, année, résumé, catégories
+async function fetchFromOpenLibraryFull(isbn: string) {
+  try {
+    // 1) ISBN → Edition
+    const editionRes = await fetch(`https://openlibrary.org/isbn/${isbn}.json`);
+    if (!editionRes.ok) return null;
+
+    const edition = await editionRes.json();
+
+    // 2) WORK
+    const workKey = edition.works?.[0]?.key;
+    let work = null;
+
+    if (workKey) {
+      const workRes = await fetch(`https://openlibrary.org${workKey}.json`);
+      if (workRes.ok) work = await workRes.json();
+    }
+
+    // 3) AUTHOR
+    const authorKey = edition.authors?.[0]?.key;
+    let authorName = "";
+
+    if (authorKey) {
+      const authorRes = await fetch(`https://openlibrary.org${authorKey}.json`);
+      if (authorRes.ok) {
+        const authorData = await authorRes.json();
+        authorName = authorData.name || "";
+      }
+    }
+
+    // 4) COVER HD
+    const coverId = edition.covers?.[0] || work?.covers?.[0];
+    const coverUrl = coverId
+      ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
+      : "";
+
+    // 5) DESCRIPTION
+    const description =
+      typeof work?.description === "string"
+        ? work.description
+        : work?.description?.value || "";
+
+    // 6) CATÉGORIE
+    const category = work?.subjects?.[0] || "Fiction";
+
+    return {
+      title: work?.title || edition.title || "",
+      author: authorName,
+      cover_url: coverUrl,
+      total_pages: edition.number_of_pages || 0,
+      edition: edition.publish_date || "",
+      category,
+      description,
+    };
+  } catch (e) {
+    console.error("Erreur OpenLibrary Full:", e);
+    return null;
+  }
+}
+
 const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   const navigate = useNavigate();
 
@@ -128,90 +189,28 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 
     try {
       const cleanIsbn = isbn.trim().replace(/[^0-9X]/gi, "");
-      const queries = cleanIsbn ? [`isbn:${cleanIsbn}`, cleanIsbn] : [isbn];
 
-      let bookFound = false;
+      // 🔥 OpenLibrary FULL (ISBN → Edition → Work → Author)
+      const book = await fetchFromOpenLibraryFull(cleanIsbn);
 
-      for (const q of queries) {
-        const res = await fetch(
-          `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(q)}`,
-        );
-        const data = await res.json();
-
-        if (data.items?.length > 0) {
-          const info = data.items[0].volumeInfo;
-          const saleInfo = data.items[0].saleInfo;
-
-          let coverUrl = "";
-          if (info.imageLinks) {
-            coverUrl = (
-              info.imageLinks.extraLarge ||
-              info.imageLinks.large ||
-              info.imageLinks.medium ||
-              info.imageLinks.small ||
-              info.imageLinks.thumbnail ||
-              info.imageLinks.smallThumbnail ||
-              ""
-            ).replace("http:", "https:");
-          }
-
-          if ((!coverUrl || coverUrl === "") && cleanIsbn) {
-            coverUrl = `https://covers.openlibrary.org/b/isbn/${cleanIsbn}-L.jpg`;
-          }
-
-          if (!coverUrl) coverUrl = "";
-
-          // Category detection
-          let category = "Fiction";
-          if (info.categories?.length > 0) {
-            const rawCat = info.categories.join(" ").toLowerCase();
-
-            if (
-              rawCat.includes("fantasy") ||
-              rawCat.includes("fantastique") ||
-              rawCat.includes("magic")
-            )
-              category = "Fantaisie";
-            else if (rawCat.includes("science fiction"))
-              category = "Science-Fiction";
-            else if (rawCat.includes("romance")) category = "Romance";
-            else if (rawCat.includes("thriller")) category = "Thriller";
-            else if (rawCat.includes("mystery") || rawCat.includes("policier"))
-              category = "Policier";
-            else if (rawCat.includes("history")) category = "Historique";
-            else if (rawCat.includes("biography")) category = "Biographie";
-            else if (rawCat.includes("juvenile")) category = "Jeunesse";
-            else if (rawCat.includes("manga")) category = "Manga";
-            else if (rawCat.includes("essay")) category = "Essai";
-            else if (rawCat.includes("self-help"))
-              category = "Développement Personnel";
-            else category = "Fiction";
-          }
-
-          let support: "physical" | "ebook" | "audio" = "physical";
-          if (saleInfo?.isEbook) support = "ebook";
-
-          setNewBook((prev) => ({
-            ...prev,
-            title: info.title || "",
-            author: info.authors?.join(", ") || "",
-            category,
-            total_pages: info.pageCount || info.printedPageCount || 0,
-            cover_url: coverUrl,
-            support,
-            edition: info.publisher || "",
-          }));
-
-          bookFound = true;
-          break;
-        }
-      }
-
-      if (!bookFound) {
+      if (!book) {
         alert(
-          "Livre non trouvé. Vous pouvez saisir les informations manuellement.",
+          "Livre introuvable. Vous pouvez remplir les informations manuellement.",
         );
+        return;
       }
+
+      setNewBook((prev) => ({
+        ...prev,
+        title: book.title,
+        author: book.author,
+        category: book.category || "Fiction",
+        total_pages: book.total_pages || 0,
+        cover_url: book.cover_url || "",
+        support: "physical",
+        edition: book.edition || "",
+        notes: book.description || "",
+      }));
     } catch (err) {
       console.error(err);
       alert("Erreur lors de la récupération des informations.");
@@ -329,9 +328,10 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 
         <button
           onClick={() => setShowAdd(true)}
-          className="bg-accent text-white p-4 rounded-full shadow-lg hover:scale-110 transition-transform"
+          className="bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow hover:scale-105 transition-transform flex items-center justify-center gap-2"
         >
-          <Plus size={24} />
+          <Plus size={18} />
+          Ajouter
         </button>
       </header>
 
@@ -346,9 +346,9 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-8">
-          {reading.map((book) => (
+          {reading.map((book, index) => (
             <BookCard
-              key={book.id}
+              key={book.id || `reading-${index}`}
               book={book}
               onUpdateProgress={(p) => updateProgress(book.id, p)}
               onUpdateBook={updateBook}
@@ -366,7 +366,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
         </div>
 
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {finished.slice(0, 6).map((book) => {
+          {finished.slice(0, 6).map((book, index) => {
             const progress = Math.min(
               100,
               Math.round((book.current_page / (book.total_pages || 1)) * 100),
@@ -374,7 +374,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 
             return (
               <div
-                key={book.id}
+                key={book.id || `finished-${index}`}
                 onClick={() => navigate(`/book/${book.id}`)}
                 className="cursor-pointer group"
               >
@@ -418,27 +418,24 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
               exit={{ scale: 0.9, opacity: 0 }}
               className="bg-white w-full max-w-xl p-8 rounded-3xl my-auto"
             >
+              {/* 🔥 OVERLAY PREMIUM AJOUTÉ ICI */}
+              {isFetching && (
+                <div className="absolute inset-0 bg-white/70 backdrop-blur-sm flex items-center justify-center rounded-3xl z-50">
+                  <Loader2 className="animate-spin text-accent" size={32} />
+                </div>
+              )}
               <div className="flex justify-between items-center mb-6">
                 <h3 className="text-3xl font-serif italic">Ajouter un livre</h3>
 
                 <button
                   type="button"
                   onClick={() => setShowScanner(true)}
-                  className="flex items-center gap-2 bg-accent/10 text-accent px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest hover:bg-accent hover:text-white transition-all"
+                  className="bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow hover:scale-105 transition-transform flex items-center gap-2"
                 >
-                  <Camera size={16} />
+                  <Camera size={18} />
                   Scanner
                 </button>
               </div>
-
-              {isFetching && (
-                <div className="mb-6 p-4 bg-accent/5 rounded-2xl flex items-center gap-3 text-accent animate-pulse">
-                  <Loader2 className="animate-spin" size={20} />
-                  <p className="text-sm font-medium">
-                    Récupération des informations...
-                  </p>
-                </div>
-              )}
 
               {/* FORM */}
               <form
@@ -575,6 +572,21 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                   />
                 </div>
 
+                {/* NOTES / RÉSUMÉ */}
+                <div className="md:col-span-2">
+                  <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
+                    Résumé / Notes
+                  </label>
+                  <textarea
+                    className="w-full p-3 bg-paper rounded-xl border border-black/5 h-32 resize-none"
+                    value={newBook.notes || ""}
+                    onChange={(e) =>
+                      setNewBook({ ...newBook, notes: e.target.value })
+                    }
+                    placeholder="Résumé du livre, notes personnelles, impressions..."
+                  />
+                </div>
+
                 {/* CARD FONT */}
                 <div className="md:col-span-2 space-y-6 pt-4 border-t border-black/5">
                   <div>
@@ -583,9 +595,9 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     </label>
 
                     <div className="flex flex-wrap gap-2">
-                      {fonts.map((font) => (
+                      {fonts.map((font, index) => (
                         <button
-                          key={font.id}
+                          key={font.id || `font-${index}`}
                           type="button"
                           onClick={
                             () =>
@@ -613,9 +625,9 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     </label>
 
                     <div className="flex flex-wrap gap-2">
-                      {availableBackgrounds.map((bg) => (
+                      {availableBackgrounds.map((bg, index) => (
                         <button
-                          key={bg.id}
+                          key={bg.id || `bg-${index}`}
                           type="button"
                           onClick={() =>
                             setNewBook({
@@ -644,9 +656,9 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                   </label>
 
                   <div className="flex flex-wrap gap-2">
-                    {STICKERS.map((sticker) => (
+                    {STICKERS.map((sticker, index) => (
                       <button
-                        key={sticker.id}
+                        key={sticker.id || `sticker-${index}`}
                         type="button"
                         onClick={() =>
                           setNewBook({
@@ -657,12 +669,12 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                           })
                         }
                         className={`w-10 h-10 rounded-xl border transition-all flex items-center justify-center bg-white
-          ${
-            newBook.stickers.includes(sticker.id)
-              ? "border-accent ring-2 ring-accent ring-offset-2"
-              : "border-black/10 hover:border-accent/40"
-          }
-        `}
+                        ${
+                          newBook.stickers.includes(sticker.id)
+                            ? "border-accent ring-2 ring-accent ring-offset-2"
+                            : "border-black/10 hover:border-accent/40"
+                        }
+                      `}
                       >
                         <img
                           src={sticker.url}
@@ -673,7 +685,6 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     ))}
                   </div>
                 </div>
-
                 {/* ACTION BUTTONS */}
                 <div className="md:col-span-2 flex gap-4 mt-4">
                   <button
@@ -698,7 +709,13 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 
         {/* SCANNER MODAL */}
         {showScanner && (
-          <ScannerModal onScan={handleScan} onClose={closeScanner} />
+          <ScannerModal
+            onScan={(isbn) => {
+              closeScanner(); // 👈 ferme immédiatement la modal Scanner
+              handleScan(isbn); // 👈 lance Google Books ensuite
+            }}
+            onClose={closeScanner}
+          />
         )}
       </AnimatePresence>
     </div>

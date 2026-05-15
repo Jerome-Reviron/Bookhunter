@@ -344,9 +344,10 @@ const BookClubPage = ({ user }: { user: User }) => {
 
           <button
             onClick={() => setShowCreateClubModal(true)}
-            className="bg-accent text-white px-8 py-4 rounded-full font-bold flex items-center gap-2 hover:scale-105 transition-transform shadow-lg shadow-accent/20"
+            className="bg-accent text-white px-6 py-3 rounded-2xl font-bold shadow hover:scale-105 transition-transform flex items-center justify-center gap-2"
           >
-            <Plus size={20} /> Créer un Club
+            <Plus size={18} />
+            Créer un Club
           </button>
         </div>
 
