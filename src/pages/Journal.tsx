@@ -29,6 +29,43 @@ import { BOOK_CATEGORIES } from "../constants/bookCategories";
 import BookCard from "../components/BookCard";
 import ScannerModal from "../components/ScannerModal";
 
+// Nettoie les descriptions OpenLibrary (supprime les lignes de type [1]: https://... et [Source][1])
+function cleanOpenLibraryDescription(raw: string | undefined | null): string {
+  if (!raw) return "";
+
+  return raw
+    .split("\n")
+    .filter((line) => {
+      const trimmed = line.trim();
+      // Supprime les lignes de source ou de référence
+      return (
+        !/^\s*\[\d+\]:\s*https?:\/\//i.test(trimmed) && // [1]: http...
+        !/^\[Source\]/i.test(trimmed) && // [Source]
+        !/^\[Source\]\[\d+\]/i.test(trimmed) // [Source][1]
+      );
+    })
+    .join("\n")
+    .trim();
+}
+
+// Traduction gratuite FR via Google Translate public endpoint
+async function translateToFrench(text: string): Promise<string> {
+  if (!text) return "";
+
+  try {
+    const res = await fetch(
+      `https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=fr&dt=t&q=${encodeURIComponent(
+        text,
+      )}`,
+    );
+    const data = await res.json();
+    return data[0]?.map((t: any) => t[0]).join("") || text;
+  } catch (e) {
+    console.error("Erreur traduction:", e);
+    return text; // fallback : texte original
+  }
+}
+
 // --- OpenLibrary FULL SCRAPER ---
 // Récupère : titre, auteur, couverture HD, pages, éditeur, année, résumé, catégories
 async function fetchFromOpenLibraryFull(isbn: string) {
@@ -66,23 +103,30 @@ async function fetchFromOpenLibraryFull(isbn: string) {
       ? `https://covers.openlibrary.org/b/id/${coverId}-L.jpg`
       : "";
 
-    // 5) DESCRIPTION
-    const description =
+    // 5) DESCRIPTION BRUTE
+    const rawDescription =
       typeof work?.description === "string"
         ? work.description
         : work?.description?.value || "";
 
+    // 5bis) DESCRIPTION NETTOYÉE
+    const description = cleanOpenLibraryDescription(rawDescription);
+
     // 6) CATÉGORIE
     const category = work?.subjects?.[0] || "Fiction";
 
+    // 7) Traduction FR automatique
+    const titleFr = await translateToFrench(work?.title || edition.title || "");
+    const descriptionFr = await translateToFrench(description);
+
     return {
-      title: work?.title || edition.title || "",
+      title: titleFr,
       author: authorName,
       cover_url: coverUrl,
       total_pages: edition.number_of_pages || 0,
       edition: edition.publish_date || "",
       category,
-      description,
+      description: descriptionFr,
     };
   } catch (e) {
     console.error("Erreur OpenLibrary Full:", e);
