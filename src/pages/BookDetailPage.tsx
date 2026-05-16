@@ -30,6 +30,8 @@ const BookDetailPage = ({ user }: { user: User }) => {
   const [profile, setProfile] = useState<User | null>(null);
 
   const [STICKERS, setSTICKERS] = useState<Sticker[]>([]);
+  const [backgrounds, setBackgrounds] = useState<any[]>([]);
+  const [fonts, setFonts] = useState<any[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
@@ -39,10 +41,26 @@ const BookDetailPage = ({ user }: { user: User }) => {
 
   // Load stickers from DB
   useEffect(() => {
-    fetch("/api/stickers/get.php")
+    fetch("/api/stickers/user.php", { credentials: "include" })
       .then((res) => res.json())
       .then((data) => setSTICKERS(data))
       .catch(() => setSTICKERS([]));
+  }, []);
+
+  // Load backgrounds from DB
+  useEffect(() => {
+    fetch("/api/backgrounds/user.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setBackgrounds(data))
+      .catch(() => setBackgrounds([]));
+  }, []);
+
+  // Load fonts from DB
+  useEffect(() => {
+    fetch("/api/fonts/user.php", { credentials: "include" })
+      .then((res) => res.json())
+      .then((data) => setFonts(data))
+      .catch(() => setFonts([]));
   }, []);
 
   const fetchBookData = useCallback(async () => {
@@ -101,11 +119,15 @@ const BookDetailPage = ({ user }: { user: User }) => {
   const handleSliderRelease = async () => {
     if (book && localPage !== book.current_page) {
       try {
-        const res = await fetch(`/api/books/${id}`, {
-          method: "PATCH",
+        const res = await fetch(`/api/books/update.php`, {
+          method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ current_page: localPage }),
+          body: JSON.stringify({
+            book_id: id,
+            current_page: localPage,
+          }),
         });
+
         if (res.ok) fetchBookData();
       } catch {
         // silencieux comme dans le reste du projet
@@ -129,11 +151,15 @@ const BookDetailPage = ({ user }: { user: User }) => {
 
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch(`/api/books/${id}`, {
-      method: "PATCH",
+    const res = await fetch(`/api/books/update.php`, {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(editData),
+      body: JSON.stringify({
+        book_id: id,
+        ...editData,
+      }),
     });
+
     if (res.ok) {
       setIsEditing(false);
       fetchBookData();
@@ -285,11 +311,25 @@ const BookDetailPage = ({ user }: { user: User }) => {
                 <button
                   key={star}
                   onClick={async () => {
-                    await fetch(`/api/books/${id}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ rating: star }),
+                    const newRating = star;
+
+                    // Mise à jour locale immédiate
+                    setBook((prev) => {
+                      if (!prev) return prev;
+                      return { ...prev, rating: newRating };
                     });
+
+                    // Mise à jour backend
+                    await fetch(`/api/books/update.php`, {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        book_id: id,
+                        rating: newRating,
+                      }),
+                    });
+
+                    // Recharge propre depuis backend
                     fetchBookData();
                   }}
                   className="hover:scale-110 transition-transform"
@@ -562,19 +602,51 @@ const BookDetailPage = ({ user }: { user: User }) => {
                   <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
                     Note (1-5)
                   </label>
-                  <input
-                    type="number"
-                    min="0"
-                    max="5"
-                    className="w-full p-4 bg-paper rounded-2xl border border-black/5"
-                    value={editData.rating || 0}
-                    onChange={(e) =>
-                      setEditData({
-                        ...editData,
-                        rating: parseInt(e.target.value),
-                      })
-                    }
-                  />
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditData({
+                          ...editData,
+                          rating: Math.max(0, (editData.rating || 0) - 1),
+                        })
+                      }
+                      className="px-3 py-2 rounded-xl bg-paper border border-black/10 hover:border-accent/30"
+                    >
+                      −
+                    </button>
+
+                    <input
+                      type="number"
+                      min="0"
+                      max="5"
+                      step="1"
+                      readOnly
+                      inputMode="numeric"
+                      pattern="[0-5]"
+                      className="w-full p-4 bg-paper rounded-2xl border border-black/5 text-center"
+                      value={editData.rating ?? 0}
+                      onChange={(e) => {
+                        const val = parseInt(e.target.value);
+                        if (!isNaN(val) && val >= 0 && val <= 5) {
+                          setEditData({ ...editData, rating: val });
+                        }
+                      }}
+                    />
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditData({
+                          ...editData,
+                          rating: Math.min(5, (editData.rating || 0) + 1),
+                        })
+                      }
+                      className="px-3 py-2 rounded-xl bg-paper border border-black/10 hover:border-accent/30"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="text-[10px] uppercase tracking-widest font-bold opacity-40">
@@ -689,25 +761,23 @@ const BookDetailPage = ({ user }: { user: User }) => {
                       </label>
 
                       <div className="flex flex-wrap gap-2">
-                        {[
-                          "sans",
-                          "serif",
-                          "mono",
-                          ...safeJsonArray(profile?.unlocked_fonts),
-                        ].map((font) => (
+                        {fonts.map((font) => (
                           <button
-                            key={font}
+                            key={font.id}
                             type="button"
                             onClick={() =>
-                              setEditData({ ...editData, card_font: font })
+                              setEditData({
+                                ...editData,
+                                card_font: font.css_class,
+                              })
                             }
-                            className={`px-4 py-2 rounded-xl border text-xs font-bold capitalize transition-all ${
-                              editData.card_font === font
+                            className={`px-4 py-2 rounded-xl border text-xs font-bold capitalize transition-all ${font.css_class} ${
+                              editData.card_font === font.css_class
                                 ? "bg-accent text-white border-accent"
                                 : "bg-paper border-black/5 hover:border-accent/30"
                             }`}
                           >
-                            {font}
+                            {font.label}
                           </button>
                         ))}
                       </div>
@@ -720,21 +790,21 @@ const BookDetailPage = ({ user }: { user: User }) => {
                       </label>
 
                       <div className="flex flex-wrap gap-2">
-                        {[
-                          "bg-white",
-                          ...safeJsonArray(profile?.unlocked_backgrounds),
-                        ].map((bg) => (
+                        {backgrounds.map((bg) => (
                           <button
-                            key={bg}
+                            key={bg.id}
                             type="button"
                             onClick={() =>
-                              setEditData({ ...editData, card_bg: bg })
+                              setEditData({
+                                ...editData,
+                                card_bg: bg.css_class,
+                              })
                             }
                             className={`w-10 h-10 rounded-xl border transition-all ${
-                              editData.card_bg === bg
+                              editData.card_bg === bg.css_class
                                 ? "ring-2 ring-accent ring-offset-2"
                                 : "border-black/5 hover:border-accent/30"
-                            } ${bg === "bg-white" ? "bg-white" : bg}`}
+                            } ${bg.css_class}`}
                           />
                         ))}
                       </div>

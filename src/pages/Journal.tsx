@@ -377,11 +377,14 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
 
   // Update book
   const updateBook = async (id: number, data: any) => {
-    await fetch(`/api/books/${id}`, {
-      method: "PATCH",
+    await fetch(`/api/books/update.php`, {
+      method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        book_id: id,
+        ...data,
+      }),
     });
     fetchBooks();
   };
@@ -389,10 +392,14 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
   // Delete book
   const deleteBook = async (id: number) => {
     if (!confirm("Supprimer ce livre ?")) return;
-    await fetch(`/api/books/${id}`, {
-      method: "DELETE",
+
+    await fetch(`/api/books/delete.php`, {
+      method: "POST",
       credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ book_id: id }),
     });
+
     fetchBooks();
   };
 
@@ -405,9 +412,13 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
       {/* HEADER */}
       <header className="flex justify-between items-end mb-12">
         <div>
-          <p className="text-xs uppercase tracking-[0.2em] font-semibold opacity-40 mb-2">
-            Bienvenue {user.pseudo}
+          <p className="text-xs uppercase tracking-[0.2em] font-semibold opacity-70 mb-2">
+            Bienvenue{" "}
+            <span className="font-serif italic text-accent">
+              {user?.pseudo}
+            </span>
           </p>
+
           <h2 className="text-5xl font-serif italic">Mon Journal de Lecture</h2>
         </div>
 

@@ -47,6 +47,7 @@ $allowedFields = [
     "edition",
     "status",
     "total_pages",
+    "rating",
     "current_page",
     "cover_url",
     "notes",
