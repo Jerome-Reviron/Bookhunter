@@ -25,12 +25,12 @@ export default defineConfig(({ mode }) => {
     },
 
     server: {
-      host: true, // ⭐ Permet l'accès depuis ton téléphone
+      host: true,
       hmr: process.env.DISABLE_HMR !== "true",
 
       proxy: {
         "/api": {
-          target: "http://localhost/Bookhunter",
+          target: "http://192.168.1.98/Bookhunter",
           changeOrigin: true,
           secure: false,
           rewrite: (path) => path.replace(/^\/api/, "/api"),

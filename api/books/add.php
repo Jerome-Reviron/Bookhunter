@@ -1,4 +1,8 @@
 <?php
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
 require_once __DIR__ . '/../cors.php';
 require_once __DIR__ . '/../auth.php';
 require_once __DIR__ . '/../db.php';
@@ -18,32 +22,49 @@ try {
         exit;
     }
 
-    // Convertir stickers en JSON
+    // 🔹 Sécurisation des champs optionnels
+    $title      = $input['title'] ?? '';
+    $author     = $input['author'] ?? '';
+    $category   = $input['category'] ?? 'Fiction';
+    $support    = $input['support'] ?? 'physical';
+    $edition    = $input['edition'] ?? '';
+    $status     = $input['status'] ?? 'reading';
+    $totalPages = intval($input['total_pages'] ?? 0);
+    $coverUrl   = $input['cover_url'] ?? '';
+
+    // 🔹 Champs qui posaient problème (NOT NULL)
+    $notes = $input['notes'] ?? '';   // ⬅️ FIX CRITIQUE
+    $tags  = $input['tags'] ?? '';    // ⬅️ FIX (si colonne NOT NULL)
+
+    // 🔹 Stickers doit être JSON
     $stickers = json_encode($input['stickers'] ?? []);
 
-    // Valeurs par défaut
+    // 🔹 Valeurs par défaut pour la carte
     $cardFont = $input['card_font'] ?? 'default';
     $cardBg   = $input['card_bg'] ?? 'default';
 
+    // 🔹 Requête SQL corrigée
     $stmt = $pdo->prepare("
         INSERT INTO books (
             user_id, title, author, category, support, edition, status,
             total_pages, cover_url, current_page, notes, tags, stickers,
             card_font, card_bg
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, NULL, NULL, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?)
     ");
 
     $stmt->execute([
         $userId,
-        $input['title'] ?? '',
-        $input['author'] ?? '',
-        $input['category'] ?? 'Fiction',
-        $input['support'] ?? 'physical',
-        $input['edition'] ?? '',
-        $input['status'] ?? 'reading',
-        intval($input['total_pages'] ?? 0),
-        $input['cover_url'] ?? '',
+        $title,
+        $author,
+        $category,
+        $support,
+        $edition,
+        $status,
+        $totalPages,
+        $coverUrl,
+        $notes,
+        $tags,
         $stickers,
         $cardFont,
         $cardBg
@@ -53,6 +74,7 @@ try {
         'success' => true,
         'book_id' => $pdo->lastInsertId()
     ]);
+
 } catch (Exception $e) {
     http_response_code(500);
     echo json_encode(['error' => $e->getMessage()]);

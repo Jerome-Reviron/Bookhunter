@@ -25,9 +25,49 @@ const safeJsonArray = (value: any) => {
 
 import { User, BookEntry, BookForm, Sticker } from "../types";
 import { BOOK_CATEGORIES } from "../constants/bookCategories";
-
 import BookCard from "../components/BookCard";
 import ScannerModal from "../components/ScannerModal";
+
+function normalizeCategory(rawCategory: string): string {
+  if (!rawCategory) return "Autre";
+
+  const match = BOOK_CATEGORIES.find((cat) =>
+    rawCategory.toLowerCase().includes(cat.toLowerCase()),
+  );
+
+  return match || "Autre";
+}
+
+function extractCategoryFromSubjects(subjects: string[]): string {
+  if (!subjects || subjects.length === 0) return "Autre";
+
+  // Normalisation des catégories Bookhunter
+  const normalizedCategories = BOOK_CATEGORIES.map((cat) =>
+    cat
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, ""),
+  );
+
+  for (const subject of subjects) {
+    const cleanSubject = subject
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9 ]/g, " ");
+
+    // On teste chaque catégorie
+    for (let i = 0; i < normalizedCategories.length; i++) {
+      const cat = normalizedCategories[i];
+
+      if (cleanSubject.includes(cat)) {
+        return BOOK_CATEGORIES[i]; // On renvoie la catégorie originale
+      }
+    }
+  }
+
+  return "Autre";
+}
 
 // Nettoie les descriptions OpenLibrary (supprime les lignes de type [1]: https://... et [Source][1])
 function cleanOpenLibraryDescription(raw: string | undefined | null): string {
@@ -113,7 +153,7 @@ async function fetchFromOpenLibraryFull(isbn: string) {
     const description = cleanOpenLibraryDescription(rawDescription);
 
     // 6) CATÉGORIE
-    const category = work?.subjects?.[0] || "Fiction";
+    const category = extractCategoryFromSubjects(work?.subjects || []);
 
     // 7) Traduction FR automatique
     const titleFr = await translateToFrench(work?.title || edition.title || "");
@@ -124,7 +164,7 @@ async function fetchFromOpenLibraryFull(isbn: string) {
       author: authorName,
       cover_url: coverUrl,
       total_pages: edition.number_of_pages || 0,
-      edition: edition.publish_date || "",
+      edition: edition.publishers?.[0] || "",
       category,
       description: descriptionFr,
     };
@@ -248,7 +288,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
         ...prev,
         title: book.title,
         author: book.author,
-        category: book.category || "Fiction",
+        category: normalizeCategory(book.category),
         total_pages: book.total_pages || 0,
         cover_url: book.cover_url || "",
         support: "physical",
@@ -280,13 +320,14 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
     e.preventDefault();
 
     try {
-      const res = await fetch("http://localhost/Bookhunter/api/books/add.php", {
+      const res = await fetch("/api/books/add.php", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({
           ...newBook,
           userId: user.id,
+          notes: newBook.notes ?? "",
           card_font: newBook.card_font,
           card_bg: newBook.card_bg,
           stickers: newBook.stickers ?? [],
@@ -641,7 +682,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     <div className="flex flex-wrap gap-2">
                       {fonts.map((font, index) => (
                         <button
-                          key={font.id || `font-${index}`}
+                          key={font.id ? `font-${font.id}` : `font-${index}`}
                           type="button"
                           onClick={
                             () =>
@@ -671,7 +712,7 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                     <div className="flex flex-wrap gap-2">
                       {availableBackgrounds.map((bg, index) => (
                         <button
-                          key={bg.id || `bg-${index}`}
+                          key={bg.id ? `bg-${bg.id}` : `bg-${index}`}
                           type="button"
                           onClick={() =>
                             setNewBook({
@@ -702,7 +743,11 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
                   <div className="flex flex-wrap gap-2">
                     {STICKERS.map((sticker, index) => (
                       <button
-                        key={sticker.id || `sticker-${index}`}
+                        key={
+                          sticker.id
+                            ? `sticker-${sticker.id}`
+                            : `sticker-${index}`
+                        }
                         type="button"
                         onClick={() =>
                           setNewBook({

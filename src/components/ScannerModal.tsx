@@ -159,7 +159,7 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
               {/* Conteneur du scanner */}
               <div
                 id="reader"
-                key={selectedCameraId}
+                key={selectedCameraId || "reader"}
                 className="w-full aspect-[4/3] bg-black rounded-[32px] overflow-hidden shadow-inner relative"
               />
 
@@ -168,26 +168,6 @@ const ScannerModal: React.FC<ScannerModalProps> = React.memo(
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[240px] h-[130px] border-2 border-accent rounded-lg shadow-[0_0_0_999px_rgba(0,0,0,0.5)]"></div>
               </div>
             </div>
-
-            {/* Sélecteur de caméra */}
-            {cameras.length > 1 && (
-              <div className="mt-3">
-                <label className="text-[10px] uppercase tracking-widest font-bold opacity-40 mb-1 block">
-                  Changer de caméra
-                </label>
-                <select
-                  className="w-full p-2 bg-paper rounded-xl border border-black/5 text-xs"
-                  value={selectedCameraId || ""}
-                  onChange={(e) => setSelectedCameraId(e.target.value)}
-                >
-                  {cameras.map((camera, index) => (
-                    <option key={camera.id || index} value={camera.id}>
-                      {camera.label || `Caméra ${index + 1}`}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            )}
 
             {/* Erreur */}
             {error && (
