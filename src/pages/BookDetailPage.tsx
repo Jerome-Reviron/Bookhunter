@@ -36,7 +36,6 @@ const BookDetailPage = ({ user }: { user: User }) => {
   const [loading, setLoading] = useState(true);
   const [isEditing, setIsEditing] = useState(false);
   const [editData, setEditData] = useState<any>(null);
-  const [localPage, setLocalPage] = useState(0);
   const [error, setError] = useState<string | null>(null);
 
   // Load stickers from DB
@@ -78,7 +77,6 @@ const BookDetailPage = ({ user }: { user: User }) => {
           const bookData = await bookRes.json();
           setBook(bookData);
           setEditData(bookData);
-          setLocalPage(bookData.current_page);
         } else {
           setError("Erreur lors du chargement des données du livre");
         }
@@ -111,29 +109,6 @@ const BookDetailPage = ({ user }: { user: User }) => {
   useEffect(() => {
     fetchBookData();
   }, [fetchBookData]);
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalPage(parseInt(e.target.value));
-  };
-
-  const handleSliderRelease = async () => {
-    if (book && localPage !== book.current_page) {
-      try {
-        const res = await fetch(`/api/books/update.php`, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            book_id: id,
-            current_page: localPage,
-          }),
-        });
-
-        if (res.ok) fetchBookData();
-      } catch {
-        // silencieux comme dans le reste du projet
-      }
-    }
-  };
 
   const handleEditImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -284,16 +259,6 @@ const BookDetailPage = ({ user }: { user: User }) => {
                     className="bg-accent h-full"
                   />
                 </div>
-                <input
-                  type="range"
-                  min="0"
-                  max={book.total_pages || 100}
-                  value={localPage}
-                  onChange={handleSliderChange}
-                  onMouseUp={handleSliderRelease}
-                  onTouchEnd={handleSliderRelease}
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                />
                 <div
                   className="absolute h-4 w-4 bg-white border-2 border-accent rounded-full shadow-md pointer-events-none transition-transform group-hover/slider:scale-125"
                   style={{
@@ -302,7 +267,7 @@ const BookDetailPage = ({ user }: { user: User }) => {
                 />
               </div>
               <p className="text-center text-xs mt-2 text-ink/40">
-                {localPage} sur {book.total_pages} pages
+                {book.current_page} sur {book.total_pages} pages
               </p>
             </div>
 

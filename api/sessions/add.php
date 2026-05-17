@@ -33,7 +33,7 @@ if (
 
 $userId = intval($_SESSION['user_id']);
 $bookId = intval($input["book_id"]);
-$pages = intval($input["pages_read"]);
+$pagesRead = intval($input["pages_read"]);
 
 $startSession = $input["start_session"]; // format DATETIME
 $endSession = $input["end_session"];     // format DATETIME
@@ -42,7 +42,7 @@ $endSession = $input["end_session"];     // format DATETIME
 $durationSeconds = strtotime($endSession) - strtotime($startSession);
 
 // Vérifier que le livre appartient à l'utilisateur
-$stmt = $pdo->prepare("SELECT id, start_date FROM books WHERE id = ? AND user_id = ?");
+$stmt = $pdo->prepare("SELECT id, start_date, total_pages, current_page FROM books WHERE id = ? AND user_id = ?");
 $stmt->execute([$bookId, $userId]);
 $book = $stmt->fetch();
 
@@ -58,30 +58,41 @@ try {
         INSERT INTO reading_sessions (user_id, book_id, pages_read, start_session, end_session, duration_seconds)
         VALUES (?, ?, ?, ?, ?, ?)
     ");
-    $stmt->execute([$userId, $bookId, $pages, $startSession, $endSession, $durationSeconds]);
+    $stmt->execute([$userId, $bookId, $pagesRead, $startSession, $endSession, $durationSeconds]);
 
     // Mettre à jour start_date et end_date dans la table books
     if ($book["start_date"] === null) {
         // Première session → start_date = start_session
-        $update = $pdo->prepare("
+        $updateDates = $pdo->prepare("
             UPDATE books
             SET start_date = ?, end_date = ?
             WHERE id = ? AND user_id = ?
         ");
-        $update->execute([$startSession, $endSession, $bookId, $userId]);
+        $updateDates->execute([$startSession, $endSession, $bookId, $userId]);
     } else {
         // Sessions suivantes → end_date = end_session
-        $update = $pdo->prepare("
+        $updateDates = $pdo->prepare("
             UPDATE books
             SET end_date = ?
             WHERE id = ? AND user_id = ?
         ");
-        $update->execute([$endSession, $bookId, $userId]);
+        $updateDates->execute([$endSession, $bookId, $userId]);
     }
+
+    // 🔥 Mise à jour du nombre de pages lues
+    $newCurrentPage = min($book["current_page"] + $pagesRead, $book["total_pages"]);
+
+    $updatePage = $pdo->prepare("
+        UPDATE books
+        SET current_page = ?
+        WHERE id = ? AND user_id = ?
+    ");
+    $updatePage->execute([$newCurrentPage, $bookId, $userId]);
 
     echo json_encode([
         "success" => true,
-        "session_id" => $pdo->lastInsertId()
+        "session_id" => $pdo->lastInsertId(),
+        "current_page" => $newCurrentPage
     ]);
 
 } catch (Exception $e) {

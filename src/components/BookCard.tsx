@@ -22,21 +22,16 @@ const BookCard: React.FC<BookCardProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const [localPage, setLocalPage] = useState(book.current_page);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
   const [sessionPages, setSessionPages] = useState(0);
   const [startSession, setStartSession] = useState<string | null>(null);
 
+  // 🔥 Progression calculée uniquement à partir de current_page
   const progress = Math.min(
     100,
-    Math.round((localPage / (book.total_pages || 1)) * 100),
+    Math.round((book.current_page / (book.total_pages || 1)) * 100),
   );
-
-  // Sync local page when book updates
-  useEffect(() => {
-    setLocalPage(book.current_page);
-  }, [book.current_page]);
 
   // Timer logic
   useEffect(() => {
@@ -67,16 +62,6 @@ const BookCard: React.FC<BookCardProps> = ({
     setSeconds(0);
     setSessionPages(0);
     setStartSession(null);
-  };
-
-  const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setLocalPage(parseInt(e.target.value));
-  };
-
-  const handleSliderRelease = async () => {
-    if (localPage !== book.current_page) {
-      await onUpdateBook(book.id, { current_page: localPage });
-    }
   };
 
   return (
@@ -157,11 +142,11 @@ const BookCard: React.FC<BookCardProps> = ({
               <span>Progression</span>
               <br />
               <span>
-                {localPage} / {book.total_pages} pages. ({progress}%)
+                {book.current_page} / {book.total_pages} pages ({progress}%)
               </span>
             </div>
 
-            <div className="relative w-full h-4 flex items-center group/slider">
+            <div className="relative w-full h-4 flex items-center">
               <div className="absolute inset-0 bg-accent/30 h-1.5 my-auto rounded-full overflow-hidden">
                 <motion.div
                   initial={{ width: 0 }}
@@ -170,19 +155,9 @@ const BookCard: React.FC<BookCardProps> = ({
                 />
               </div>
 
-              <input
-                type="range"
-                min="0"
-                max={book.total_pages || 100}
-                value={localPage}
-                onChange={handleSliderChange}
-                onMouseUp={handleSliderRelease}
-                onTouchEnd={handleSliderRelease}
-                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-              />
-
+              {/* Curseur purement visuel */}
               <div
-                className="absolute h-3 w-3 bg-white border-2 border-accent rounded-full shadow-sm pointer-events-none transition-transform group-hover/slider:scale-125"
+                className="absolute h-3 w-3 bg-white border-2 border-accent rounded-full shadow-sm pointer-events-none"
                 style={{ left: `calc(${progress}% - 6px)` }}
               />
             </div>
