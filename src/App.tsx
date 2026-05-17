@@ -81,7 +81,7 @@ export default function App() {
       .then((res) => res.json())
       .then((data) => {
         if (data && !data.error) {
-          setUser(data.user); // ✅ correction essentielle
+          setUser(data); // ✅ correction ici
         }
       })
       .finally(() => {

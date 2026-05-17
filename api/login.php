@@ -224,7 +224,10 @@ $_SESSION['email'] = $user['email'];
 // 9) Réponse finale
 // ---------------------------------------------------------
 echo json_encode([
-    "success" => true,
-    "user"    => $user
+  "id" => $user["id"],
+  "pseudo" => $user["pseudo"],
+  "email" => $user["email"],
+  "role" => $user["role"]
 ]);
+
 exit;
