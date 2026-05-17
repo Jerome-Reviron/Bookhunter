@@ -444,6 +444,7 @@ const BookDetailPage = ({ user }: { user: User }) => {
               <Clock className="text-accent" size={20} />
               <h3 className="text-2xl font-serif">Historique de lecture</h3>
             </div>
+
             <div className="space-y-4">
               {sessions.length === 0 ? (
                 <p className="text-ink/30 italic text-center py-8">
@@ -455,22 +456,37 @@ const BookDetailPage = ({ user }: { user: User }) => {
                     key={session.id ?? `session-${index}`}
                     className="bg-white p-6 rounded-3xl border border-black/5 flex justify-between items-center"
                   >
-                    <div className="flex items-center gap-4">
-                      <div className="bg-accent/5 p-2 rounded-xl text-accent text-xs font-bold">
+                    <div>
+                      <p className="text-base font-serif font-semibold text-accent mb-2">
+                        {new Date(
+                          session.start_session.replace(" ", "T"),
+                        ).toLocaleDateString("fr-FR")}
+                      </p>
+
+                      <p className="text-[10px] text-ink/40 uppercase tracking-widest">
+                        Début :{" "}
+                        {new Date(
+                          session.start_session.replace(" ", "T"),
+                        ).toLocaleTimeString("fr-FR")}
+                      </p>
+
+                      <p className="text-[10px] text-ink/40 uppercase tracking-widest">
+                        Fin :{" "}
+                        {new Date(
+                          session.end_session.replace(" ", "T"),
+                        ).toLocaleTimeString("fr-FR")}
+                      </p>
+                    </div>
+
+                    <div className="text-right">
+                      <div className="bg-accent/5 px-3 py-1 rounded-xl text-accent text-xs font-bold inline-block mb-1">
                         +{session.pages_read}p
                       </div>
-                      <div>
-                        <p className="text-sm font-medium">
-                          Session de lecture
-                        </p>
-                        <p className="text-[10px] text-ink/40 uppercase tracking-widest">
-                          {new Date(session.timestamp).toLocaleString()}
-                        </p>
-                      </div>
+                      <p className="text-xs font-bold text-accent">
+                        {Math.floor(session.duration_seconds / 60)} min{" "}
+                        {session.duration_seconds % 60}s
+                      </p>
                     </div>
-                    <p className="text-xs font-bold text-accent">
-                      {session.duration_minutes} min
-                    </p>
                   </div>
                 ))
               )}

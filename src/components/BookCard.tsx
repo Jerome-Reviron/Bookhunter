@@ -9,14 +9,14 @@ import "../styles/fonts.css";
 
 interface BookCardProps {
   book: BookEntry;
-  onUpdateProgress: (pages: number) => void;
+  onAddReadingSession: (pages: number, start: string, end: string) => void;
   onUpdateBook: (id: number, data: any) => void;
   STICKERS: Sticker[];
 }
 
 const BookCard: React.FC<BookCardProps> = ({
   book,
-  onUpdateProgress,
+  onAddReadingSession,
   onUpdateBook,
   STICKERS,
 }) => {
@@ -25,6 +25,8 @@ const BookCard: React.FC<BookCardProps> = ({
   const [localPage, setLocalPage] = useState(book.current_page);
   const [isTimerActive, setIsTimerActive] = useState(false);
   const [seconds, setSeconds] = useState(0);
+  const [sessionPages, setSessionPages] = useState(0);
+  const [startSession, setStartSession] = useState<string | null>(null);
 
   const progress = Math.min(
     100,
@@ -55,9 +57,16 @@ const BookCard: React.FC<BookCardProps> = ({
 
   const stopSession = () => {
     setIsTimerActive(false);
-    const pages = Math.max(1, Math.floor(seconds / 60)); // 1 page/minute
-    onUpdateProgress(pages);
+
+    const end = new Date().toISOString().slice(0, 19).replace("T", " ");
+
+    if (startSession) {
+      onAddReadingSession(sessionPages, startSession, end);
+    }
+
     setSeconds(0);
+    setSessionPages(0);
+    setStartSession(null);
   };
 
   const handleSliderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -183,7 +192,13 @@ const BookCard: React.FC<BookCardProps> = ({
           <div className="flex flex-col gap-2">
             {!isTimerActive ? (
               <button
-                onClick={() => setIsTimerActive(true)}
+                onClick={() => {
+                  setIsTimerActive(true);
+                  setSessionPages(0);
+                  setStartSession(
+                    new Date().toISOString().slice(0, 19).replace("T", " "),
+                  );
+                }}
                 className="w-full bg-accent text-white text-[10px] font-bold py-2 rounded-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <Clock size={12} /> Lancer une session
@@ -200,14 +215,27 @@ const BookCard: React.FC<BookCardProps> = ({
 
             <div className="flex gap-2">
               <button
-                onClick={() => onUpdateProgress(10)}
-                className="flex-1 bg-accent/30 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                disabled={!isTimerActive}
+                onClick={() => setSessionPages((p) => p + 10)}
+                className={`flex-1 text-[10px] font-bold py-2 rounded-lg transition-colors
+                ${
+                  isTimerActive
+                    ? "bg-accent/30 text-accent hover:bg-accent hover:text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
               >
                 +10 p.
               </button>
+
               <button
-                onClick={() => onUpdateProgress(25)}
-                className="flex-1 bg-accent/30 text-accent text-[10px] font-bold py-2 rounded-lg hover:bg-accent hover:text-white transition-colors"
+                disabled={!isTimerActive}
+                onClick={() => setSessionPages((p) => p + 25)}
+                className={`flex-1 text-[10px] font-bold py-2 rounded-lg transition-colors
+                ${
+                  isTimerActive
+                    ? "bg-accent/30 text-accent hover:bg-accent hover:text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                }`}
               >
                 +25 p.
               </button>

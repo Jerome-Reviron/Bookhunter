@@ -19,7 +19,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Récupérer le JSON envoyé par le front
 $input = json_decode(file_get_contents("php://input"), true);
 
-if (!$input || !isset($input["book_id"]) || !isset($input["pages_read"]) || !isset($input["duration_minutes"])) {
+if (
+    !$input ||
+    !isset($input["book_id"]) ||
+    !isset($input["pages_read"]) ||
+    !isset($input["start_session"]) ||
+    !isset($input["end_session"])
+) {
     http_response_code(400);
     echo json_encode(["error" => "Missing fields"]);
     exit;
@@ -28,14 +34,19 @@ if (!$input || !isset($input["book_id"]) || !isset($input["pages_read"]) || !iss
 $userId = intval($_SESSION['user_id']);
 $bookId = intval($input["book_id"]);
 $pages = intval($input["pages_read"]);
-$duration = intval($input["duration_minutes"]);
-$date = $input["date"] ?? date("Y-m-d H:i:s");
+
+$startSession = $input["start_session"]; // format DATETIME
+$endSession = $input["end_session"];     // format DATETIME
+
+// Calcul de la durée exacte en secondes
+$durationSeconds = strtotime($endSession) - strtotime($startSession);
 
 // Vérifier que le livre appartient à l'utilisateur
-$stmt = $pdo->prepare("SELECT id FROM books WHERE id = ? AND user_id = ?");
+$stmt = $pdo->prepare("SELECT id, start_date FROM books WHERE id = ? AND user_id = ?");
 $stmt->execute([$bookId, $userId]);
+$book = $stmt->fetch();
 
-if ($stmt->rowCount() === 0) {
+if (!$book) {
     http_response_code(403);
     echo json_encode(["error" => "Forbidden"]);
     exit;
@@ -44,11 +55,29 @@ if ($stmt->rowCount() === 0) {
 try {
     // Ajouter la session
     $stmt = $pdo->prepare("
-        INSERT INTO reading_sessions (user_id, book_id, pages_read, duration_minutes, timestamp)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO reading_sessions (user_id, book_id, pages_read, start_session, end_session, duration_seconds)
+        VALUES (?, ?, ?, ?, ?, ?)
     ");
+    $stmt->execute([$userId, $bookId, $pages, $startSession, $endSession, $durationSeconds]);
 
-    $stmt->execute([$userId, $bookId, $pages, $duration, $date]);
+    // Mettre à jour start_date et end_date dans la table books
+    if ($book["start_date"] === null) {
+        // Première session → start_date = start_session
+        $update = $pdo->prepare("
+            UPDATE books
+            SET start_date = ?, end_date = ?
+            WHERE id = ? AND user_id = ?
+        ");
+        $update->execute([$startSession, $endSession, $bookId, $userId]);
+    } else {
+        // Sessions suivantes → end_date = end_session
+        $update = $pdo->prepare("
+            UPDATE books
+            SET end_date = ?
+            WHERE id = ? AND user_id = ?
+        ");
+        $update->execute([$endSession, $bookId, $userId]);
+    }
 
     echo json_encode([
         "success" => true,

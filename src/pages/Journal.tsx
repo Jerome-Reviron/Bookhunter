@@ -360,18 +360,25 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
     }
   };
 
-  // Update progress
-  const updateProgress = async (id: number, pages: number) => {
-    await fetch("/api/sessions", {
+  // Enregistrer une session de lecture
+  const addReadingSession = async (
+    id: number,
+    pages: number,
+    start: string,
+    end: string,
+  ) => {
+    await fetch("/api/sessions/add.php", {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        bookId: id,
-        pagesRead: pages,
-        duration_minutes: 30,
+        book_id: id,
+        pages_read: pages,
+        start_session: start,
+        end_session: end,
       }),
     });
+
     fetchBooks();
   };
 
@@ -446,7 +453,9 @@ const Journal = ({ user, onLogout }: { user: User; onLogout: () => void }) => {
             <BookCard
               key={book.id || `reading-${index}`}
               book={book}
-              onUpdateProgress={(p) => updateProgress(book.id, p)}
+              onAddReadingSession={(pages, start, end) =>
+                addReadingSession(book.id, pages, start, end)
+              }
               onUpdateBook={updateBook}
               STICKERS={STICKERS}
             />
